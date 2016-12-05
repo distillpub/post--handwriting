@@ -1,0 +1,21 @@
+{
+  "name": "handwriting",
+  "description": "",
+  "main": "index.md",
+  "authors": [
+    "Shan Carter <shanjcarter@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/distillpub/post--handwriting",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "^1.7.0"
+  }
+}
