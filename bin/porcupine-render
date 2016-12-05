@@ -29,7 +29,7 @@ function render(coordinates) {
   var body = d3.select(jsdom().documentElement).select("body");
 
   var width = 1800,
-      height = 600;
+      height = 450;
 
   var svg = body.append("svg")
       .attr("version", "1.1")
