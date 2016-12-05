@@ -13,11 +13,16 @@ cat assets/validation/cells/0.json | bin/sort
 ##Feedback
 
 - Fix coloring of hairs
-- add dots to the prediction
+
 - Add loading indicator to hairs.
+
 - Add loading indicator to cells.
+
 - Add loading indicator to predictions.
+
 - Make footnote superscripts more visually prominent.
+
+- multithread predictions
 
 - for the visualizations that show each step for every cell, is there a way for me to step through it using either the arrow keys on the keyboard or clicking on the step label and dragging it left and right? i found myself trying to follow what's happening with cell 45, for example, but it is really hard to do...
 
@@ -26,6 +31,7 @@ cat assets/validation/cells/0.json | bin/sort
 - One thing I noticed about the overlays is that when the human handwriting is used as a baseline, the colors seem more uniform--a lot of blue followed by a lot of brown, rather than half blue/brown areas. I take this to mean that the human is way on one side or other of the learned distribution--in a sense, it's a way of visualizing how far off the human baseline is from the learned distribution. By contrast, when the machine is used as a baseline, you'd expect the baseline sample to generally be in the middle, and indeed I seem to see blue and brown mixed a lot.
 
 ##Completed
+- add dots to the prediction
 - Color key for figure-hairs diagrams.
 - "Temperature" replaced with "variation" and sentence added to explain it more.
 - Conclusion reworked to be less self-effacing.

@@ -44,6 +44,7 @@
     "@webcomponents/custom-elements": "github:webcomponents/custom-elements",
     "@webcomponents/shadydom": "github:webcomponents/shadydom",
     "d3": "^4.3.0",
+    "d3-scale-chromatic": "^1.1.0",
     "distill-components": "^1.4.1",
     "jsdom": "^9.8.3",
     "ml-matrix": "^2.1.0",
