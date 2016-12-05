@@ -258,14 +258,16 @@
 
   <h3>Footnotes</h3>
 
-  <p><a id="footnote1">1.</a> The model has a parameter which determines how widely it samples from the underlying distribution. It is labeled here as variation but is more commonly referred to as temperature.</p>
+  <p><a id="footnote1">1.</a> The model has a parameter which determines how widely it samples from the underlying distribution. It is labeled here as variation but is more commonly referred to as temperature. Temperature is most commonly discussed in <a href="https://en.wikipedia.org/wiki/Boltzmann_distribution">Boltzmann distributions</a>, but can be generalized to all probability distributions. In this more general form, changing the temperature by a factor of <i>T</i> corresponds to raising all probabilities to the power of <i>1/T</i> and normalizing.</p>
 
-  <p><a id="footnot2">2.</a> The model used in this articles is a version of the model described in Section 4.2 of <a href="https://arxiv.org/abs/1308.0850">Generating Sequences With Recurrent Neural Network</a> by Alex Graves. It is a small LSTM, with 500 hidden units, trained to perform the unconditional handwriting generation task.  For a detailed description of the model and training procedure, please refer to <a href="http://blog.otoro.net/2015/12/12/handwriting-generation-demo-in-tensorflow/">this blog</a> post in addition to the Graves paper.  After training the LSTM, we quantized the weights using 8-bit integers, and exported the weights into a small <a href="https://jb64.org/specification/">JSON-Base64</a> formatted file.</p>
+  <p><a id="footnote2">2.</a> The model used in this articles is a version of the model described in Section 4.2 of <a href="https://arxiv.org/abs/1308.0850">Generating Sequences With Recurrent Neural Network</a> by Alex Graves. It is a small LSTM, with 500 hidden units, trained to perform the unconditional handwriting generation task.  For a detailed description of the model and training procedure, please refer to <a href="http://blog.otoro.net/2015/12/12/handwriting-generation-demo-in-tensorflow/">this blog</a> post in addition to the Graves paper.  After training the LSTM, we quantized the weights using 8-bit integers, and exported the weights into a small <a href="https://jb64.org/specification/">JSON-Base64</a> formatted file.</p>
 
   <p><a id="footnote3">3.</a> We use two different tricks to make the t-SNE organization of neurons work better. First, if a cell state is mostly negative, we canonicalize it by flipping its sign. (From the LSTM's perspective, this is completely equivelant, provided we flip the sign of some weights. The sign of a cell state is arbitrary.) Secondly, we blur cell states slightly over time before using t-SNE to organize them. This causes t-SNE to see cells that lag or lead eachother slightly as close together.</p>
 
 
   <h3>Acknowledgments</h3>
+
+  <p>We are grateful for the comments of Fernanda Viegas, Martin Wattenberg, and Daniel Smilkov.
 
   <p>This work was made possible by the support of the <a href="https://research.google.com/teams/brain/">Google Brain</a> team.
 
@@ -290,8 +292,10 @@
   <%={{ }}=%>
   <h3>References</h3>
   <ul class="references">
-    <li><a href="https://lvdmaaten.github.io/publications/papers/JMLR_2008.pdf">van der Maaten and Hinton. <b>Visualizing Data using t-SNE.</b> Journal of Machine Learning Research 9 (2008) 2579-2605</a></li>
-    <li><a href="https://arxiv.org/pdf/1308.0850v5.pdf">Graves. <b>Generating Sequences With Recurrent Neural Networks.</b> CoRR (2013) abs/1308.0850</a></li>
+    <li><a href="https://arxiv.org/pdf/1308.0850v5.pdf">Graves, A., 2013. <b>Generating sequences with recurrent neural networks.</b> arXiv preprint arXiv:1308.0850.</a></li>
+    <li><a href="">Ha, D., 2016. <b>Handwriting Generation Demo in TensorFlow</b>.</a></li>
+    <li><a href="https://lvdmaaten.github.io/publications/papers/JMLR_2008.pdf">Maaten, L.V.D. and Hinton, G., 2008. <b>Visualizing data using t-SNE.</b> Journal of Machine Learning Research, 9(Nov), pp.2579-2605.</a></li>
+    <li><a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">Olah, C., 2015. <b>Understanding LSTM Networks</b>.</a></li>
   </ul>
 
 </section>
