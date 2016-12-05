@@ -1,0 +1,315 @@
+<style>
+  figure-predict {
+    display: block;
+    position: relative;
+    height: 400px;
+    margin-bottom: 80px;
+  }
+  figure-predict svg {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  figure-predict canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    mix-blend-mode: multiply;
+  }
+  figure-predict .user path {
+    fill: none;
+    stroke: rgb(49, 145, 137);
+    stroke-width: 1.5px;
+  }
+  figure-predict .user circle {
+    fill: rgb(49, 145, 137);
+  }
+  figure-predict .user line {
+    stroke: #ddd;
+    stroke-dasharray: 3,3;
+  }
+  figure-predict .user .prompt circle {
+    fill: none;
+    stroke: #ddd;
+  }
+  figure-predict .user .prompt text {
+    font-size: 13px;
+    fill: #aaa;
+  }
+</style>
+
+<dom-module id="figure-predict">
+  <template>
+    <svg>
+      <g class="user">
+        <g class="prompt">
+          <text dx="-5" dy="-12">Start writing here</text>
+          <circle r="5"></circle>
+        </g>
+        <line></line>
+        <path></path>
+      </g>
+      <g class="predictions">
+
+      </g>
+    </svg>
+    <canvas></canvas>
+  </template>
+</dom-module>
+
+<script>
+Polymer({
+  is: "figure-predict",
+  initialize: function() {
+    var that = this;
+    this.color = d3.scaleSequential(d3.interpolateBrBG).domain([-3, 3]);
+
+    this.root = d3.select(this);
+    this.canvas = this.root.select("canvas");
+    this.svg = this.root.select("svg");
+
+    this.xScale = d3.scaleLinear();
+    this.yScale = d3.scaleLinear();
+
+    this.predictionLength = +this.getAttribute("predictionlength");
+    this.temperature = +this.getAttribute("temperature");
+    this.userCoordinates = [];
+
+    this.worker = new Worker("assets/worker-predict.js");
+    this.worker.onmessage = function(event) {
+      that.renderCoordinates.call(that, that.userCoordinates, that.context);
+      that.renderPrediction.call(that, event.data[0], event.data[1], event.data[2]);
+      if (that.playing) that.play();
+    }
+
+    window.addEventListener("resize", this.resize.bind(this));
+    this.reset();
+    setTimeout(this.reset.bind(this), 500);
+  },
+  play: function() {
+    this.playing = true;
+    this.worker.postMessage({
+      predict: this.predictionLength,
+      temperature: this.temperature
+    });
+  },
+  pause: function() {
+    this.playing = false;
+  },
+  resize: function() {
+    var bbox = this.getBoundingClientRect();
+
+    this.width = bbox.width;
+    this.height = bbox.height;
+
+    this.temperature = +this.getAttribute("temperature");
+
+    this.canvas.property("width", this.width);
+    this.canvas.property("height", this.height);
+
+    this.context = this.canvas.node().getContext("2d");
+
+    var zoom = 18;
+    this.origin = [150, this.height / 3];
+
+    this.xScale.domain([0, 100]).range([this.origin[0], this.origin[0] + zoom * 100]);
+    this.yScale = d3.scaleLinear().domain([0, 100]).range([this.origin[1], this.origin[1] + zoom * 100]);
+
+  },
+  reset: function() {
+    this.resize();
+    this.x = this.xScale(0);
+    this.y = this.yScale(0);
+    this.dx = 0;
+    this.dy = 0;
+    this.userCoordinates = [];
+    this.clearCanvas();
+    this.renderCoordinates(this.userCoordinates, this.context);
+    this.worker.postMessage({
+      reset: true,
+    });
+    this.play();
+  },
+  ready: function() {
+    var that = this;
+    this.initialize();
+
+    var drag = d3.drag()
+        .container(this)
+        .on("start", drawStart) // after a new pointer becomes active (on mousedown or touchstart)
+        .on("drag", draw) // after an active pointer moves (on mousemove or touchmove)
+        .on("end", drawEnd);
+
+    this.canvas.call(drag);
+
+    distill.stageManager.add(this, {
+      enterStage: this.play,
+      exitStage: this.pause
+    });
+
+    var context = this.context;
+    this.tempdx = 0;
+    this.tempdy = 0;
+    this.tempx = 0;
+    this.tempy = 0;
+
+    function drawStart() {
+      // if (that.userCoordinates.length) {
+      //   that.userCoordinates[that.userCoordinates.length - 1][2] = 1;
+      // }
+      that.dx = that.xScale.invert(d3.event.x) - that.xScale.invert(that.x);
+      that.dy = that.yScale.invert(d3.event.y) - that.yScale.invert(that.y);
+      that.userCoordinates.push([that.dx, that.dy, 0]);
+      that.worker.postMessage({update: [that.dx, that.dy, 0]});
+      that.clearCanvas();
+      that.renderCoordinates.call(that, that.userCoordinates, that.context);
+      that.tempdx = 0;
+      that.tempdy = 0;
+      that.tempx = d3.event.x;
+      that.tempy = d3.event.y;
+    }
+
+    function draw() {
+      that.tempdx = d3.event.dx + that.tempdx;
+      that.tempdy = d3.event.dy + that.tempdy;
+      if ((that.tempdx * that.tempdx + that.tempdy * that.tempdy) > 30) {
+        that.dx = that.xScale.invert(that.tempx) - that.xScale.invert(that.tempx - that.tempdx);
+        that.dy = that.yScale.invert(that.tempy) - that.yScale.invert(that.tempy - that.tempdy);
+        that.userCoordinates.push([that.dx, that.dy, 0]);
+        that.worker.postMessage({update: [that.dx, that.dy, 0]});
+        that.clearCanvas();
+        that.renderCoordinates.call(that, that.userCoordinates, that.context);
+        that.tempx = d3.event.x;
+        that.tempy = d3.event.y;
+        that.tempdx = 0;
+        that.tempdy = 0;
+      }
+    }
+
+    function drawEnd() {
+      if ((that.tempdx * that.tempdx + that.tempdy * that.tempdy) <= 30) {
+        that.dx = that.xScale.invert(that.tempx) - that.xScale.invert(that.tempx - that.tempdx);
+        that.dy = that.yScale.invert(that.tempy) - that.yScale.invert(that.tempy - that.tempdy);
+        that.userCoordinates.push([that.dx, that.dy, 1]);
+        that.worker.postMessage({update: [that.dx, that.dy, 1]});
+        that.clearCanvas();
+        that.renderCoordinates.call(that, that.userCoordinates, that.context);
+        that.tempx = d3.event.x;
+        that.tempy = d3.event.y;
+        that.tempdx = 0;
+        that.tempdy = 0;
+      }
+      that.x = d3.event.x;
+      that.y = d3.event.y;
+    }
+
+  },
+  clearCanvas: function() {
+    this.context.clearRect(0, 0, this.width, this.height);
+  },
+  renderCoordinates: function(coordinates, context) {
+    var that = this;
+
+    var prompt = this.svg.selectAll(".prompt").data([0]);
+
+    var promptEnter = prompt.enter().append("g").attr("class", "prompt");
+
+    this.svg.select(".user line")
+        .attr("x1", 100)
+        .attr("x2", this.width - 100)
+        .attr("y1", this.origin[1] + 100)
+        .attr("y2", this.origin[1] + 100);
+
+    this.svg.select(".prompt")
+        .attr("transform", "translate(" + this.origin[0] + "," + this.origin[1] + ")");
+
+    this.svg.select(".user path")
+        .attr("d", path(coordinates));
+
+    function path(coordinates) {
+      var d = "M" + that.origin[0] + "," + that.origin[1];
+
+      var x = 0, y = 0, p = 1;
+      coordinates.forEach(function(c) {
+        var dx = c[0], dy = c[1];
+        //   context.moveTo(that.xScale(x), that.yScale(y));
+        d += p ? "M" : "L";
+        d += that.xScale(x + dx) + "," + that.yScale(y + dy);
+        c.x = x;
+        c.y = y;
+        p = c[2];
+        x += dx;
+        y += dy;
+      });
+      return d;
+    }
+
+    var user = this.svg.select(".user")
+    var userPoint = user.selectAll(".point")
+        .data(coordinates);
+
+    var userPointEnter = userPoint.enter().append("circle")
+        .attr("class", "point")
+        .attr("r", 1.5);
+
+    userPoint.merge(userPointEnter)
+        .attr("cx", function(d) { return that.xScale(d.x + d[0]); })
+        .attr("cy", function(d) { return that.yScale(d.y + d[1]); });
+
+    userPoint.exit().remove();
+  },
+
+  renderPrediction: function(x1, y1, coordinates) {
+    this.context.fillStyle = "white";
+    this.context.globalAlpha = 0.3;
+    this.context.fillRect(0, 0, this.width, this.height);
+    this.context.strokeStyle = this.color(-1);
+    this.context.fillStyle = this.color(-1)
+    this.context.lineWidth = 1;
+    this.context.globalAlpha = 1;
+    var penState = this.userCoordinates.length ? this.userCoordinates[this.userCoordinates.length - 1][2] : 1;
+    var that = this;
+    coordinates.forEach(function(coords) {
+      var dx = coords[0],
+          dy = coords[1];
+      that.context.beginPath();
+      that.context.moveTo(that.xScale(x1), that.yScale(y1));
+      if (!penState) that.context.lineTo(that.xScale(x1 + dx), that.yScale(y1 + dy));
+      that.context.stroke();
+      that.context.beginPath();
+      that.context.arc(that.xScale(x1 + dx), that.yScale(y1 + dy), 1.2, 0, Math.PI * 2)
+      that.context.fill();
+      penState = coords[2];
+      x1 += dx;
+      y1 += dy;
+    });
+  },
+
+  //
+  // Events
+  //
+
+  playToggle: function() {
+    this.playing = !this.playing;
+    if(this.playing) this.play();
+  },
+  setTemperature: function(val) {
+    this.temperature = +val;
+  },
+  setPredictionLength: function(val) {
+    this.predictionLength = +val;
+  },
+  clear: function() {
+    this.reset();
+  }
+
+
+});
+</script>

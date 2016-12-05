@@ -1,0 +1,41 @@
+<style>
+  cells-target {
+    position: absolute;
+    pointer-events: none;
+  }
+  cells-target > svg {
+    position: absolute;
+    left: -11px;
+    top: -11px;
+  }
+  cells-target > svg circle:last-child {
+    fill: none;
+    stroke: black;
+    stroke-width: 1px;
+  }
+  cells-target > svg circle:first-child {
+      fill: none;
+      stroke: white;
+      stroke-opacity: 0.9;
+      stroke-width: 3.5px;
+    }
+  cells-target > svg line {
+    fill: none;
+    stroke: black;
+  }
+</style>
+
+<dom-module id="cells-target">
+  <template>
+    <svg width="20" height="20">
+      <circle r="6" cx="10" cy="10"></circle>
+      <circle r="6" cx="10" cy="10"></circle>
+    </svg>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "cells-target"
+  });
+</script>

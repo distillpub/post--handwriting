@@ -1,0 +1,161 @@
+<link rel="import" href="cells-canvas.html">
+<link rel="import" href="cells-color-key.html">
+<link rel="import" href="cells-grid.html">
+<link rel="import" href="cells-overlay.html">
+<link rel="import" href="cells-picker.html">
+<link rel="import" href="cells-svg.html">
+<link rel="import" href="cells-target.html">
+<link rel="import" href="cells-tooltip.html">
+
+<style>
+figure-cells-pca {
+  position: relative;
+  display: block;
+  border-top: 1px solid rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  margin-top: 60px;
+  margin-bottom: 60px;
+  padding: 24px 0;
+}
+
+figure-cells-pca cells-picker {
+}
+figure-cells-pca .cells {
+  position: relative;
+}
+re-cells-pca cells-svg {
+}
+figure-cells-pca cells-color-key {
+  position: absolute;
+  right: 0;
+}
+figure-cells-pca cells-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+figure-cells-pca cells-grid {
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+</style>
+
+<template id="figure-cells-pca">
+
+  <cells-color-key></cells-color-key>
+  <cells-picker></cells-picker>
+  <cells-svg></cells-svg>
+  <div class="cells">
+    <cells-canvas></cells-canvas>
+    <cells-overlay></cells-overlay>
+    <cells-grid></cells-grid>
+  </div>
+
+</template>
+
+
+
+<script>
+function loaded() {
+  console.log("loaded!", arguments)
+}
+
+distill.register("figure-cells-pca", function() {
+  var that = this;
+  var root = d3.select(that);
+
+  var picker = root.select("cells-picker").node()
+  picker.picked = loadSample;
+  var sortOrder = [];
+  picker.metadataLoaded = function(meta) {
+    console.log("meta", meta)
+    sortOrder = meta.sortOrder;
+  }
+
+  var defaultCell = 23,
+      defaultStep = 0;
+
+  function loadSample(index) {
+    d3.queue()
+      .defer(d3.json, 'assets/validation/data/' + index + '.json')
+      .defer(d3.json, 'assets/validation/cells/' + index + '.json')
+      .defer(d3.json, 'assets/pca.json?q=1')
+    .await(function(err, data, steps, eigen) {
+      var stepLimit = 370;
+      var nCells = 500;
+
+      var pcaDimensions = 40;
+      var evectors = eigen.eigenvectors.slice(0, pcaDimensions)
+
+      var reduced = []
+      for(var i = 0; i < stepLimit; i++) {
+        reduced.push(nj.dot(evectors, steps[i]).tolist())
+      }
+
+      var cellsOverlay = root.select("cells-overlay").node()
+      var cellsCanvas = root.select("cells-canvas").node()
+      cellsCanvas.ch = 5;
+      cellsCanvas.canvasHeight = pcaDimensions * cellsCanvas.ch;
+      cellsOverlay.ch = cellsCanvas.ch;
+      cellsOverlay.canvasHeight = pcaDimensions * cellsOverlay.ch;
+
+      var cellsSvg = root.select("cells-svg").node()
+      var cellsGrid = root.select("cells-grid").node()
+      cellsGrid.cellWidth = 20;
+      cellsGrid.cellHeight = 20;
+      cellsGrid.width = 85;
+
+
+      var cellIndex = 0;
+      var stepIndex = 0;
+
+      function update(si, ci) {
+        if(si >= 0)
+          stepIndex = si;
+        if(ci >= 0)
+          cellIndex = ci;
+        cellsOverlay.render(stepIndex, cellIndex);
+        cellsSvg.colorSegments(stepIndex, cellIndex, reduced);
+        cellsGrid.render(stepIndex, cellIndex, reduced);
+        defaultStep = stepIndex;
+        defaultCell = cellIndex;
+      }
+
+      cellsCanvas.select = update;
+      cellsSvg.select = update;
+      cellsGrid.select = update;
+
+      // render the cell visualization
+      cellsCanvas.renderCells(reduced);
+      // render the handwriting
+      cellsSvg.renderSteps(data.slice(0, stepLimit))
+
+      update(defaultStep, defaultCell);
+
+      d3.select("body").on("keydown.pca", function() {
+        var evt = d3.event;
+        if(evt.key === "ArrowLeft") {
+          stepIndex -= 1;
+          if(stepIndex < 0) stepIndex = 0;
+        } else if(evt.key === "ArrowRight") {
+          stepIndex += 1;
+          if(stepIndex >= stepLimit) stepIndex = stepLimit - 1;
+        } else if(evt.key === "ArrowUp") {
+          cellIndex -= 1;
+          if(cellIndex < 0) cellIndex = 0;
+          d3.event.preventDefault();
+        } else if(evt.key === "ArrowDown") {
+          cellIndex += 1;
+          if(cellIndex >= pcaDimensions) cellIndex = pcaDimensions - 1;
+          d3.event.preventDefault();
+        }
+        update(stepIndex, cellIndex)
+      })
+    })
+  }
+
+});
+</script>

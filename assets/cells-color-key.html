@@ -1,0 +1,82 @@
+<style>
+  cells-color-key {
+    display: block;
+    position: relative;
+  }
+  cells-color-key .label {
+    font-size: 13px;
+    line-height: 13px;
+    margin-bottom: 10px;
+  }
+  cells-color-key > canvas {
+    display: block;
+  }
+  cells-color-key > svg {
+    display: block;
+    position: absolute;
+  }
+  cells-color-key > svg .domain {
+    display: none;
+  }
+  cells-color-key > svg line {
+    stroke: #ccc;
+  }
+  cells-color-key > svg text {
+    fill-opacity: 0.4;
+  }
+</style>
+
+<dom-module id="cells-color-key">
+  <template>
+    <div class="label"></div>
+    <canvas></canvas>
+    <svg></svg>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "cells-color-key",
+    ready: function() {
+      var root = d3.select(this);
+      var that = this;
+
+      var margin = { top: 0, right: 12, bottom: 30, left: 12 };
+
+      var width = 180,
+          height = 8;
+
+      var canvas = root.select("canvas")
+          .attr("width", width + 1)
+          .attr("height", height);
+
+      var context = canvas.node().getContext("2d");
+
+      var svg = root.select("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", 20)
+          .style("left", -margin.left + "px")
+        .append("g")
+          .attr("transform", "translate(" + margin.left + ", 0)");
+
+      var colorScale = d3.scaleSequential(d3.interpolateBrBG)
+        .domain([-3, 3]);
+
+      var axisScale = d3.scaleLinear()
+          .domain([-5, 5])
+          .range([0, width]);
+
+      var axis = d3.axisBottom(axisScale)
+          .ticks(5);
+
+      svg.call(axis);
+
+      root.select(".label").text("Activation value")
+
+      for (var i = 0; i < width + 1; i++) {
+        context.fillStyle = colorScale(axisScale.invert(i));
+        context.fillRect(i, 0, 1, height)
+      }
+    }
+  });
+</script>

@@ -1,0 +1,54 @@
+#!/usr/bin/env node
+
+/*
+  Takes in strokes.
+  //Write out a csv of cell values.
+  Write out a JSON of cell values. an array of rows.
+  each row is a step and each element is a cell (column)
+*/
+
+var nj = require("../public/model/numjs.js"),
+    Model = require("../public/model/node-bundle.js"),
+    SimpleModel = require("../public/model/simple-model.js"),
+    Matrix = require('ml-matrix'),
+    PCA = require ('ml-pca'),
+    ProgressBar = require('progress');
+
+var json = "";
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('readable', () => {
+  var chunk = process.stdin.read();
+  if (chunk !== null) {
+    json += chunk.toString();
+  }
+});
+process.stdin.on('end', () => {
+  str = json.split('\n')
+  json = "[" + str.slice(1) + "]"
+  extract(JSON.parse(json))
+});
+
+function extract(samples) {
+  //console.log("samples", samples.length)
+  var steps = []
+  samples.forEach(function(sample) {
+    steps = steps.concat(sample)
+  })
+  //var bar = new ProgressBar(':bar', { total: coordinates.length, width: 50 });
+  //console.log("steps", steps[0])
+
+  var matrix = new Matrix(steps)
+  var pca = new PCA(matrix)
+  //console.log("pca", pca)
+  var eigenvectors = pca.getEigenvectors()
+  var eigenvalues = pca.getEigenvalues()
+  //console.log("eigen vectors", evectors)
+  //console.log("eigen values", evectors)
+
+  evectors = eigenvectors.map(function(row) { return row.map(function(d) { return Math.floor(d * 100)/100 }) })
+  evalues = eigenvalues.map(function(d) { return Math.floor(d * 100)/100 })
+
+  process.stdout.write(JSON.stringify({eigenvectors: evectors, eigenvalues: evalues}));
+  //process.stdout.write(csv);
+}

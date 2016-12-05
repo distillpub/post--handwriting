@@ -1,0 +1,240 @@
+<style>
+  cells-draw {
+    display: block;
+    position: relative;
+  }
+  cells-draw .tooltip {
+    position: absolute;
+    display: none;
+    pointer-events: none;
+  }
+  cells-draw .tips {
+    pointer-events: none;
+  }
+  cells-draw > .svg {
+    width: 100%;
+    height: 200px;
+    border: 1px dashed #eee;
+  }
+  cells-draw .segment-group {
+    stroke-linecap: round;
+    fill: none;
+    stroke-width: 3px;
+    stroke: #ccc;
+    pointer-events: all;
+  }
+  cells-draw .penup {
+    stroke-dasharray: 2 1;
+    stroke-width: 2px;
+    stroke-linecap: butt;
+  }
+</style>
+
+<dom-module id="cells-draw">
+  <template>
+    <div class="tips">
+      <cells-tooltip class="tooltip"></cells-tooltip>
+      <cells-target class="target"></cells-target>
+    </div>
+    <svg class="svg"></svg>
+  </template>
+</dom-module>
+
+<script>
+Polymer({
+  is: "cells-draw",
+  initialize: function() {
+    var that = this;
+    if (!this.initialized) {
+      this.worker = new Worker("assets/worker-cells.js");
+      this.worker.onmessage = function(event) {
+        //console.log("step", event.data.stepIndex)
+        that.steps.splice(event.data.stepIndex, 0, event.data.step)
+        that.update(that.steps, event.data.stepIndex)
+      }
+      this.initialized = true;
+    }
+  },
+  reset: function() {
+    this.steps = [];
+    this.coordinates = [];
+    this.currentStep = 0;
+    d3.select(this).select("svg.svg").selectAll("line.segment").remove()
+    var target = d3.select(this).select(".target")
+      .style("left", "0px")
+      .style("top", "0px")
+  },
+  ready: function() {
+    var root = d3.select(this);
+    var that = this;
+
+    this.initialize();
+
+    this.renderStep = renderStep; // function(coordinate)
+    this.colorSegments = colorSegments; // function(stepIndex, cellIndex, steps)
+
+    if(typeof that.select !== "function")
+      that.select = function(stepIndex, cellIndex) {};
+
+    if(typeof that.update !== "function")
+      that.update = function(steps) {};
+
+    if(typeof that.getI !== "function")
+      that.getI = function(i) { return i; }
+
+    // keep track of coordinates so we can render 1 step at time
+    that.coordinates = [];
+    that.steps = [];
+    var stepLimit = 370;
+
+    //var model = new SimpleModel(Model);
+
+    var margin = {
+      top: 10, bottom: 10,
+      left: 10, right: 10
+    }
+    var zoom = 10;
+
+    var bbox = root.select(".svg").node().getBoundingClientRect(),
+        width = bbox.width - margin.left - margin.right,
+        height = bbox.height - margin.top - margin.bottom;
+
+    var xScale = d3.scaleLinear()
+        .range([-width / 2, width / 2]);
+
+    var yScale = d3.scaleLinear()
+        .range([-height / 2, height / 2]);
+
+    // cell scale
+    var cellColorScale = d3.scaleSequential(d3.interpolateBrBG)
+      .domain([-3, 3])
+
+    var svg = root.select("svg.svg").append("g")
+        .attr("transform", "translate(" + 0 + "," + margin.top + ")");
+
+    var stage = svg.append("g")
+        .attr("class", "stage");
+
+    var tooltip = root.select(".tooltip").node();
+    var target = root.select(".target");
+
+    var segmentGroup = stage.append("g").attr("class", "segment-group");
+
+    xScale.domain([-(width / 2) / zoom, (width / 2) / zoom]);
+    yScale.domain([-(height / 2) / zoom, (height / 2) / zoom]);
+    stage.attr("transform", "translate(" + 0 + "," + (height / 2) + ")");
+
+/*
+    svg.append("circle").attr("r", 10).attr("x", xScale(0)).attr("y", yScale(0))
+    svg.append("circle").attr("r", 9).attr("x", xScale(150)).attr("y", yScale(150))
+    svg.append("circle").attr("r", 8).attr("x", xScale.invert(50)).attr("y", yScale.invert(50)).style("fill", "red")
+    svg.append("circle").attr("r", 5).attr("x", xScale.invert(0)).attr("y", yScale.invert(0)).style("fill", "blue")
+    */
+
+    that.currentStep = 0;
+    function updateModel(c) {
+      that.worker.postMessage({update: c, stepIndex: that.currentStep});
+    }
+
+
+    var drag = d3.drag()
+      .on("start", drawStart) // after a new pointer becomes active (on mousedown or touchstart)
+      .on("drag", draw) // after an active pointer moves (on mousemove or touchmove)
+      .on("end", drawEnd);
+
+    function drawStart() {
+      var coordinates = that.coordinates;
+      if(that.steps.length >= stepLimit) return;
+      root.select("svg.svg").selectAll("line.segment").style("pointer-events", "none")
+
+      // create a new coordinate
+      var x, y;
+      if(!coordinates.length) {
+        x = d3.event.x;
+        y = d3.event.y;
+        var c0 = [0, 0, 0]
+        c0.x = x;
+        c0.y = y;
+        coordinates.push(c0)
+      } else {
+        x = coordinates[coordinates.length - 1].x
+        y = coordinates[coordinates.length - 1].y
+      }
+      var px = d3.event.x;
+      var py = d3.event.y;
+      var dx = xScale.invert(px) - xScale.invert(x);
+      var dy = yScale.invert(py) - yScale.invert(y);
+      var coordinate = [dx,dy,0]
+      //renderStep(coordinate);
+      updateModel(coordinate);
+      that.currentStep++;
+    }
+    function draw() {
+      var coordinates = that.coordinates;
+      if(that.steps.length >= stepLimit) return;
+
+      var x = coordinates[coordinates.length - 1].x
+      var y = coordinates[coordinates.length - 1].y
+      var px = d3.event.x;
+      var py = d3.event.y;
+      var dx = xScale.invert(px) - xScale.invert(x);
+      var dy = yScale.invert(py) - yScale.invert(y);
+      var coordinate = [dx,dy,0]
+      renderStep(coordinate);
+      updateModel(coordinate);
+      that.currentStep++;
+    }
+    function drawEnd() {
+      var coordinates = that.coordinates;
+      root.select("svg.svg").selectAll("line.segment").style("pointer-events", "all")
+      // set pen state to up for last coordinate
+      coordinates[coordinates.length - 1][2] = 1;
+    }
+
+    root.select("svg.svg").call(drag)
+
+
+    function renderStep(coordinate) {
+      var s = that.coordinates.length;
+      var c0 = that.coordinates[s - 1]
+      var c1 = coordinate;
+      c1.x = c0.x + xScale(c1[0])
+      c1.y = c0.y + xScale(c1[1])
+      that.coordinates.push(c1)
+      renderSegment([c0.x, c0.y, c0[2]], [c1.x, c1.y, c1[2]], s)
+    }
+
+    function renderSegment(p0, p1, s) {
+      var segment = segmentGroup.append("line").classed("segment", true)
+        segment.attr("x1", p0[0])
+        segment.attr("y1", p0[1])
+        segment.attr("x2", p1[0])
+        segment.attr("y2", p1[1])
+        if (p0[2] !== 0) {
+          segment.classed("penup", true)
+        }
+        segment.datum({
+          s:s
+        })
+        segment.on("mouseover", function(d) {
+          that.select(d.s, -1);
+        })
+    }
+    function colorSegments(stepIndex, cellIndex, bycell) {
+      if(that.coordinates.length && that.coordinates[stepIndex]) {
+        target
+          .style("left", that.coordinates[stepIndex].x + "px")
+          .style("top", that.coordinates[stepIndex].y + (height / 2) + margin.top + "px");
+      }
+      var lines = svg.selectAll("line.segment")
+
+      lines
+        .style("stroke", function(d) {
+          //if(cellIndex >= 0) return cellColorScale(steps[d.s][that.getI(cellIndex)]);
+          if(cellIndex >= 0 && bycell[that.getI(cellIndex)]) return cellColorScale(bycell[that.getI(cellIndex)][d.s]);
+          return "#eee";
+        })
+    }
+  }
+});
+</script>

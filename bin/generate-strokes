@@ -1,0 +1,15 @@
+#!/usr/bin/env node
+
+var nj = require("../public/model/numjs.js"),
+    Model = require("../public/model/node-bundle.js"),
+    SimpleModel = require("../public/model/simple-model.js");
+
+var steps = process.argv[2] ? process.argv[2] : 200;
+
+var model = new SimpleModel(Model);
+
+for (var i = 0; i < steps; i++) {
+  model.step();
+}
+
+process.stdout.write(JSON.stringify(model.coordinates.map(d => [d[0], d[1], d[2]])));

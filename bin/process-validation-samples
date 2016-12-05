@@ -1,0 +1,21 @@
+#!/usr/bin/env node
+
+var json = "";
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('readable', () => {
+  var chunk = process.stdin.read();
+  if (chunk !== null) {
+    json += chunk.toString();
+  }
+});
+process.stdin.on('end', () => {
+  var data = JSON.parse(json);
+  console.error(data.length);
+  data = data.slice(1, Math.min(600, data.length));
+  data.forEach((d) => {
+    d[0] = d[0] / 40
+    d[1] = d[1] / 40
+  });
+  process.stdout.write(JSON.stringify(data));
+});

@@ -1,0 +1,76 @@
+<style>
+  cells-tooltip {
+    position: absolute;
+    pointer-events: none;
+  }
+  cells-tooltip .label {
+    display: block;
+    color: white;
+    border-radius: 4px;
+    padding: 4px 0;
+    background-color: black;
+    font-size: 11px;
+    line-height: 11px;
+    text-align: center;
+    width: 60px;
+    position: absolute;
+    left: -30px;
+    bottom: 6px;
+  }
+  cells-tooltip.orientation-left .pointer,
+  cells-tooltip.orientation-right .pointer  {
+    display: none;
+  }
+  cells-tooltip .pointer {
+    width: 20px;
+    height: 10px;
+    position: absolute;
+    left: -10px;
+    bottom: 0;
+  }
+  cells-tooltip .pointer path {
+    fill: black;
+  }
+</style>
+
+<dom-module id="cells-tooltip">
+  <template>
+    <span class="label"></span>
+    <svg class="pointer"><path d="M0,0L20,0L10,10Z"></path></svg>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "cells-tooltip",
+    render: function render(x, y, label, orientation) {
+      this.x = x;
+      this.y = y;
+      this.label = label;
+      this.orientation = orientation;
+      var root = d3.select(this);
+      if (orientation === "top") {
+        root.classed("orientation-top", true);
+        root
+          .style("position", "absolute")
+          .style("left", x + "px")
+          .style("top", y + "px");
+
+      } else if (orientation === "left") {
+        root.classed("orientation-left", true);
+        root
+          .style("position", "absolute")
+          .style("left", x - 35 + "px")
+          .style("top", y + 16 + "px");
+      } else if (orientation === "right") {
+        root.classed("orientation-right", true);
+        root
+          .style("position", "absolute")
+          .style("left", x + 55 + "px")
+          .style("top", y + 16 + "px");
+      }
+
+      root.select(".label").text(label);
+    }
+  });
+</script>

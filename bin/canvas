@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+
+var fs = require("fs"),
+    path = require("path"),
+    d3 = require("d3"),
+    Canvas = require("canvas");
+
+var width = 1000,
+    height = 500;
+
+var canvas = new Canvas(width, height),
+    context = canvas.getContext("2d");
+
+context.strokeStyle = "rgba(100,0,0,0.5)";
+context.beginPath();
+context.moveTo(50, height / 2);
+context.lineTo(width - 50, height / 2);
+context.stroke();
+
+canvas.createPNGStream().pipe(fs.createWriteStream(path.join(__dirname, "canvas.png")));

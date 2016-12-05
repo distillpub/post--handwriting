@@ -1,0 +1,167 @@
+<style>
+  cells-svg {
+    display: block;
+    position: relative;
+  }
+  cells-svg .tooltip {
+    position: absolute;
+    display: none;
+  }
+  cells-svg > .svg {
+    width: 100%;
+    height: 200px;
+    pointer-events: none;
+  }
+  cells-svg .segment-group {
+    stroke-linecap: round;
+    fill: none;
+    stroke-width: 3px;
+    stroke: #ccc;
+    pointer-events: all;
+  }
+  cells-svg .penup {
+    stroke-dasharray: 2 1;
+    stroke-width: 2px;
+    stroke-linecap: butt;
+  }
+</style>
+
+<dom-module id="cells-svg">
+  <template>
+    <cells-tooltip class="tooltip"></cells-tooltip>
+    <cells-target class="target"></cells-target>
+    <svg class="svg"></svg>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "cells-svg",
+    ready: function() {
+      var root = d3.select(this);
+      var that = this;
+
+      this.renderSteps = renderSteps; // function(coordinates)
+      this.renderStep = renderStep; // function(coordinate)
+      this.colorSegments = colorSegments; // function(stepIndex, cellIndex, steps)
+
+      if(typeof that.select !== "function")
+        that.select = function(stepIndex, cellIndex) {};
+
+      if(typeof that.getI !== "function")
+        that.getI = function(i) { return i; }
+
+      // keep track of coordinates so we can render 1 step at time
+      that.coordinates = [];
+
+      var normal = "#ccc"
+      var margin = {
+        top: 20, bottom: 20,
+        left: 20, right: 20
+      }
+      var zoom = 10;
+
+      var bbox = root.select(".svg").node().getBoundingClientRect(),
+          width = bbox.width - margin.left - margin.right,
+          height = 200 - margin.top - margin.bottom;
+
+      var xScale = d3.scaleLinear()
+          .range([-width / 2, width / 2]);
+
+      var yScale = d3.scaleLinear()
+          .range([-height / 2, height / 2]);
+
+      // cell scale
+      var cellColorScale = d3.scaleSequential(d3.interpolateBrBG)
+        .domain([-3, 3]) // TODO: dynamically calculate?
+
+      var svg = root.select(".svg").append("g")
+          // .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      var stage = svg.append("g")
+          .attr("class", "stage");
+
+      var tooltip = root.select(".tooltip").node();
+      var target = root.select(".target");
+
+      var segmentGroup = stage.append("g").attr("class", "segment-group");
+
+      xScale.domain([-(width / 2) / zoom, (width / 2) / zoom]);
+      yScale.domain([-(height / 2) / zoom, (height / 2) / zoom]);
+      stage.attr("transform", "translate(" + margin.left + "," + (height / 2) + ")");
+
+      function renderSteps(coordinates) {
+        that.coordinates = coordinates;
+        segmentGroup.selectAll("*").remove();
+        // render individual line segments
+        var x = 0;
+        var y = 0;
+        var pen = 0;
+
+        coordinates.forEach(function(c,i) {
+          var x1 = x;
+          var y1 = y;
+          x += xScale(c[0])
+          y += yScale(c[1])
+          c.x = x;
+          c.y = y;
+          renderSegment([x1,y1,pen], [x,y,c[2]], i)
+          pen = c[2];
+        })
+      }
+
+      function renderStep(coordinate) {
+        var s = that.coordinates.length;
+        var c0 = that.coordinates[s - 1]
+        var c1 = coordinate;
+        c1.x = c0.x + xScale(c1[0])
+        c1.y = c0.y + xScale(c1[1])
+        that.coordinates.push(c1)
+        renderSegment([c0.x, c0.y, c0[2]], [c1.x, c1.y, c1[2]], s)
+      }
+
+      function renderSegment(p0, p1, s) {
+        var segment = segmentGroup.append("line").classed("segment", true)
+          segment.attr("x1", p0[0])
+          segment.attr("y1", p0[1])
+          segment.attr("x2", p1[0])
+          segment.attr("y2", p1[1])
+          if (p0[2] !== 0) {
+            segment.classed("penup", true)
+          }
+          segment.datum({
+            s:s
+          })
+          segment.on("mouseover", function(d) {
+            that.select(d.s, -1);
+          })
+      }
+      function colorSegments(stepIndex, cellIndex, bycell) {
+        tooltip.render(
+          that.coordinates[stepIndex].x + margin.left,
+          that.coordinates[stepIndex].y + (height / 2) - 12,
+          "Step " + stepIndex,
+          "top"
+        );
+
+        target
+          .style("left", that.coordinates[stepIndex].x + margin.left + "px")
+          .style("top", that.coordinates[stepIndex].y + (height / 2) + "px");
+
+        var lines = svg.selectAll("line.segment")
+          // .style("stroke-width", 4)
+
+        // lines
+          // .filter(function(d) { return d.s === stepIndex; })
+          // .style("stroke-width", 15);
+
+        lines
+          .style("stroke", function(d) {
+            //if(cellIndex >= 0) return cellColorScale(steps[d.s][that.getI(cellIndex)]);
+            if(cellIndex >= 0) return cellColorScale(bycell[that.getI(cellIndex)][d.s]);
+            return normal;
+          })
+      }
+    }
+  });
+</script>

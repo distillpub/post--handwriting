@@ -1,0 +1,38 @@
+<script>
+"use strict";
+Polymer({
+  is: "distill-deck",
+  properties: {
+    index: {
+      value: 0,
+      type: Number
+    }
+  },
+  created: function() {
+    this.style.display = "block";
+    this.style.position = "relative";
+    this.slides = [].slice.call(this.childNodes).filter(function(el) { return el.nodeType === 1 && el.nodeName !== "STYLE"; });
+    this.setAttribute("index", 0);
+  },
+  attributeChanged: function(attributeName) {
+    if (attributeName === "index") {
+      this.slides.forEach((el) => {
+        el.style.top = 0;
+        el.style.left = 0;
+        el.style.position = "absolute";
+        // el.style.zIndex = 0;
+        el.style.opacity = 0;
+        // el.style.transition = "opacity 0.3s";
+      });
+      if (this.slides && this.slides[this.index]) {
+        this.slides[this.index].style.position = "relative";
+        this.slides[this.index].style.opacity = 1;
+        // this.slides[val].style.zIndex = this.slides.length;
+
+      }
+    }
+  }
+
+
+});
+</script>

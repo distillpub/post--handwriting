@@ -1,0 +1,92 @@
+<style>
+  cells-picker {
+    display: block;
+  }
+  cells-picker > h3.headline {
+    font-weight: normal;
+    margin-top: 0;
+    font-size: 16px;
+  }
+  cells-picker select {
+    font-size: 14px;
+    font-family: "Open sans";
+
+  }
+  cells-picker .samples {
+    display: block;
+    overflow: hidden;
+  }
+  cells-picker .example {
+    margin-right: 7px;
+  }
+  cells-picker .cell {
+    margin-left: 7px;
+  }
+</style>
+
+<dom-module id="cells-picker">
+  <template>
+    <h3 class="headline"><select class="example"></select> colored by activations of <select class="cell"></select></h3>
+    <div class="samples">
+    </div>
+    <!-- TODO
+    <div class="user"></div>
+    <div class="machine"></div>
+    -->
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "cells-picker",
+    ready: function() {
+    var root = d3.select(this);
+    var that = this;
+
+    var numCells = 500;
+
+    if(typeof that.picked !== "function")
+      // maybe this should throw an error if its not a function
+      that.picked = function(sampleIndex) {}
+    if(typeof that.metadataLoaded !== "function")
+      that.metadataLoaded = function(metadata) {};
+
+    var cellSelect = root.select(".cell");
+
+    var exampleSelect = root.select(".example");
+    this.cellSelect = cellSelect.node();
+
+    d3.queue()
+      .defer(d3.json, 'assets/metadata.json')
+      .await(function(error, metadata) {
+        that.metadataLoaded(metadata);
+
+        exampleSelect.selectAll("option")
+            .data(metadata.validationSamples)
+          .enter().append("option")
+            .property("value", function(d, i) { return i; })
+            .text(function(d, i) { return "Validation example " + (i + 1); });
+
+        exampleSelect.on("change", function(d) {
+          that.picked(metadata.validationSamples[this.value]);
+        });
+
+        cellSelect.selectAll("option")
+            .data(d3.range(numCells))
+          .enter().append("option")
+            .property("value", function(d, i) { return i; })
+            .text(function(d, i) { return "cell " + i; });
+
+        cellSelect.on("input", function() {
+          that.dispatchEvent(new CustomEvent("cellselect", {"detail": this.value}));
+        });
+
+        that.picked(metadata.validationSamples[0]);
+
+      });
+    },
+    render(cellIndex) {
+      this.cellSelect.value = cellIndex;
+    }
+  });
+</script>

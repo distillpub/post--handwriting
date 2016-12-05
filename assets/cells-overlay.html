@@ -1,0 +1,89 @@
+<link rel="import" href="cells-tooltip.html">
+<link rel="import" href="cells-target.html">
+
+<style>
+  cells-overlay {
+    display: block;
+    position: relative;
+    pointer-events: none;
+  }
+  cells-overlay > svg {
+    position: relative;
+  }
+  cells-overlay > svg .horizontal {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+  }
+  cells-overlay > svg .target {
+    fill: none;
+    stroke: black;
+    stroke-width: 1.5px;
+  }
+</style>
+
+<dom-module id="cells-overlay">
+  <template>
+    <svg>
+      <line class="horizontal" ></line>
+    </svg>
+    <cells-target class="target"></cells-target>
+    <cells-tooltip class="tooltip step"></cells-tooltip>
+    <cells-tooltip class="tooltip cell" ></cells-tooltip>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "cells-overlay",
+    ready: function() {
+      this.root = d3.select(this);
+      this.stepLimit = 370;
+      this.nCells = 500;
+      this.cw = 2;
+      this.ch = 1;
+      this.canvasWidth = this.stepLimit * this.cw;
+      this.canvasHeight = 500;
+
+      this.margin = { top: 20, right: 0, bottom: 0, left: 20 };
+
+      this.svg = this.root.select("svg");
+      this.target = this.root.select(".target");
+      this.cellTooltip = this.root.select(".tooltip.cell").node();
+      this.stepTooltip = this.root.select(".tooltip.step").node();
+    },
+    getI: function(i) {
+      return i;
+    },
+    render: function(s, i) {
+      //var canvas = root.select("canvas")
+      this.svg
+        .style("width", this.canvasWidth + this.margin.left + this.margin.right + "px")
+        .style("height", this.canvasHeight + this.margin.top + this.margin.bottom + "px")
+
+      if(i >= this.nCells) return;
+
+      // render the vertical crosshair box for the row
+      var vw = 1;
+      var x = s * this.cw - vw + 1;
+      var hw = 1;
+      var y = i * this.ch - hw + 1 + this.ch / 2;
+
+      this.stepTooltip.render(x, 0, "Step " + s, "top");
+
+      // render the horizontal crosshair box for the column
+      if(i >= 0) {
+        this.cellTooltip.render(x - 8, y, "Cell " + i, "left");
+        this.svg.select(".horizontal")
+          .attr("x1", x)
+          .attr("y1", 0)
+          .attr("x2", x)
+          .attr("y2", this.canvasHeight)
+      }
+
+      this.target
+          .style("left", x + 1.5 + "px")
+          .style("top", y + 1.5 + "px");
+    }
+  });
+</script>

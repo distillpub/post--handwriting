@@ -1,0 +1,183 @@
+<link rel="import" href="cells-tooltip.html">
+<link rel="import" href="cells-canvas.html">
+<link rel="import" href="cells-color-key.html">
+<link rel="import" href="cells-grid.html">
+<link rel="import" href="cells-overlay.html">
+<link rel="import" href="cells-picker.html">
+<link rel="import" href="cells-svg.html">
+<link rel="import" href="cells-target.html">
+
+<style>
+  figure-cells {
+    position: relative;
+    display: block;
+    margin-bottom: 60px;
+  }
+  figure-cells .cells {
+    position: relative;
+  }
+  figure-cells cells-color-key {
+    display: none;
+    position: absolute;
+    right: 0;
+  }
+  @media (min-width: 800px) {
+    figure-cells cells-color-key {
+      display: block;
+    }
+  }
+  figure-cells cells-overlay {
+    display: block;
+    position: absolute;
+    top: 0;
+  }
+  figure-cells cells-grid {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+  @media (min-width: 1024px) {
+    figure-cells cells-grid {
+      display: block;
+    }
+  }
+</style>
+
+<dom-module id="figure-cells">
+  <template>
+    <div class="controls">
+      <cells-color-key></cells-color-key>
+      <cells-picker></cells-picker>
+    </div>
+    <cells-svg></cells-svg>
+    <div class="cells">
+      <cells-canvas></cells-canvas>
+      <cells-overlay></cells-overlay>
+      <cells-grid></cells-grid>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+Polymer({
+  is: "figure-cells",
+  properties: {
+    mode: String
+  },
+  ready: function() {
+    var that = this;
+    var root = d3.select(this);
+    // Why do I have to do this polymer-micro.html?!?
+    // It works fine with the full polymer.html
+    this.mode = this.getAttribute("mode");
+    var picker = root.select("cells-picker").node()
+    picker.picked = loadSample;
+
+    var sortOrder = [];
+    picker.metadataLoaded = function(meta) {
+      sortOrder = meta.sortOrder;
+    }
+
+    var defaults = this.getAttribute("defaults").split(",")
+    var defaultCell = defaults[0],
+        defaultStep = defaults[1];
+
+    function loadSample(index) {
+      d3.queue()
+        .defer(d3.json, 'assets/validation/data/' + index + '.json')
+        .defer(d3.json, 'assets/validation/cells/' + index + '.json')
+      .await(function(err, data, steps) {
+        var stepLimit = 370;
+        var nCells = 500;
+        steps = steps.slice(0, stepLimit)
+        // for some reason the last example is only 356 steps
+
+        // transpose steps into arrays per cell so we can recolor
+        var bycell = d3.range(500).map(function() { return [] })
+        for(var i = 0; i < steps.length; i++) {
+          for(var j = 0; j < bycell.length; j++) {
+            bycell[j][i] = steps[i][j]
+          }
+        }
+        bycell.forEach(function(cell,i) {
+          //var negative = cell.reduce(function(sum, d) { return d < 0 ? sum + 1 : sum }, 0)
+          //if(negative > 50) bycell[i] = cell.map(function(d) { return d * -1 })
+          //if(negative > 100) cell = cell.map(function(d) { return d * -1 })
+          var sum = d3.sum(cell)
+          if(sum < 0) cell = cell.map(function(d) { return d * -1 })
+          bycell[i] = cell;
+        });
+
+        var cellsOverlay = root.select("cells-overlay").node()
+        var cellsCanvas = root.select("cells-canvas").node()
+        var cellsSvg = root.select("cells-svg").node()
+        var cellsGrid = root.select("cells-grid").node();
+
+        picker.addEventListener("cellselect", function(e) {
+          update(defaultStep, +e.detail);
+        })
+
+        function getI(i) { return that.mode === "sorted" ? sortOrder[i] : i; }
+        cellsCanvas.getI = getI;
+        //cellsOverlay.getI = getI;
+        cellsGrid.getI = getI;
+        cellsSvg.getI = getI;
+
+        var cellIndex = 0;
+        var stepIndex = 0;
+
+        function update(si, ci) {
+          if(si >= 0)
+            stepIndex = si;
+          if(ci >= 0)
+            cellIndex = ci;
+          cellsOverlay.render(stepIndex, cellIndex)
+          //cellsSvg.colorSegments(stepIndex, cellIndex, steps)
+          cellsSvg.colorSegments(stepIndex, cellIndex, bycell)
+          //cellsGrid.render(stepIndex, cellIndex, steps);
+          cellsGrid.render(stepIndex, cellIndex, bycell);
+          picker.render(cellIndex);
+          defaultStep = stepIndex;
+          defaultCell = cellIndex;
+        }
+        // expose function to set cell
+        that.setCell = function(ci) {
+          update(-1, ci)
+        }
+
+        cellsCanvas.select = update;
+        cellsSvg.select = update;
+        cellsGrid.select = update;
+
+        //cellsCanvas.renderCells(steps);
+        cellsCanvas.renderCells(bycell);
+        cellsSvg.renderSteps(data.slice(0, stepLimit))
+
+        update(defaultStep, defaultCell);
+
+        d3.select("body").on("keydown.sorted", function() {
+          var evt = d3.event;
+          if(evt.key === "ArrowLeft") {
+            stepIndex -= 1;
+            if(stepIndex < 0) stepIndex = 0;
+          } else if(evt.key === "ArrowRight") {
+            stepIndex += 1;
+            if(stepIndex >= stepLimit) stepIndex = stepLimit - 1;
+          }
+          // } else if(evt.key === "ArrowUp") {
+          //   cellIndex -= 1;
+          //   if(cellIndex < 0) cellIndex = 0;
+          //   d3.event.preventDefault();
+          // } else if(evt.key === "ArrowDown") {
+          //   cellIndex += 1;
+          //   if(cellIndex >= nCells) cellIndex = nCells - 1;
+          //   d3.event.preventDefault();
+          // }
+          update(stepIndex, cellIndex)
+        });
+      })
+    }
+  }
+});
+</script>

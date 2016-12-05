@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+
+/*
+  Takes in strokes.
+  //Write out a csv of cell values.
+  Write out a JSON of cell values. an array of rows.
+  each row is a step and each element is a cell (column)
+*/
+
+var nj = require("../public/model/numjs.js"),
+    Model = require("../public/model/node-bundle.js"),
+    SimpleModel = require("../public/model/simple-model.js"),
+    ProgressBar = require('progress');
+
+var json = "";
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('readable', () => {
+  var chunk = process.stdin.read();
+  if (chunk !== null) {
+    json += chunk.toString();
+  }
+});
+process.stdin.on('end', () => {
+  extract(JSON.parse(json))
+});
+
+function extract(coordinates) {
+  var model = new SimpleModel(Model);
+  var bar = new ProgressBar(':bar', { total: coordinates.length, width: 50 });
+
+  var rows = []
+  //csv = ""
+  var previousCoordinates = [0, 0, 0];
+  model.update(0,0,0);
+  coordinates.forEach(function(c) {
+    model.update(c[0], c[1], c[2]);
+    var row = pullCells(model)
+    //rows.push(row)
+    // we can save up to 60% by truncating all the floats
+    rows.push(row.map(function(d) { return Math.floor(d * 100)/100 }))
+    //csv += row.toString() + "\n"
+    bar.tick();
+  })
+  process.stdout.write(JSON.stringify(rows));
+  //process.stdout.write(csv);
+}
+
+
+
+function pullCells(model) {
+  var cells = [];
+  for(var i = 0; i < 500; i++) {
+    cells.push(model.modelS[1].get(i))
+  }
+  return cells;
+}

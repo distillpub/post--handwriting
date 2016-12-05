@@ -1,0 +1,257 @@
+<style>
+  figure-normalize {
+    display: block;
+    position: relative;
+    height: 400px;
+  }
+  figure-normalize svg, figure-normalize canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>
+
+<dom-module id="figure-normalize">
+  <template>
+    <canvas></canvas>
+    <svg></svg>
+  </template>
+</dom-module>
+
+<script>
+Polymer({
+  is: "figure-normalize",
+  play: function() {
+    if(!this.initialized) this.initialize();
+    this.playing = true;
+    this.worker.postMessage({
+      predict: this.predictionLength,
+      temperature: this.temperature
+    });
+  },
+  pause: function() {
+    this.playing = false;
+  },
+  playToggle: function() {
+    this.playing = !this.playing;
+    if(this.playing) this.play();
+  },
+  setTemperature: function(val) {
+    this.temperature = +val;
+  },
+  setPredictionLength: function(val) {
+    this.predictionLength = +val;
+  },
+  clear: function() {
+    this.reset();
+  },
+  initialize: function() {
+    var that = this;
+    if (!this.initialized) {
+      this.worker = new Worker("assets/worker-predict.js");
+      this.resize();
+      this.worker.onmessage = function(event) {
+        that.renderCoordinates(that.userCoordinates, that.context);
+        that.renderPrediction.call(that, event.data[0], event.data[1], event.data[2]);
+        if (that.playing) that.play();
+      }
+      this.initialized = true;
+    }
+  },
+  resize: function() {
+    var bbox = this.getBoundingClientRect();
+
+    this.width = bbox.width;
+    this.height = bbox.height;
+
+    this.temperature = +this.getAttribute("temperature");
+    this.predictionLength = +this.getAttribute("predictionlength")
+
+    this.canvas.property("width", this.width);
+    this.canvas.property("height", this.height);
+
+    this.context = this.canvas.node().getContext("2d");
+
+    var zoom = 18;
+    this.origin = [150, this.height / 3];
+
+    this.xScale = d3.scaleLinear()
+        .domain([0, 100])
+        .range([this.origin[0], this.origin[0] + zoom * 100]);
+
+    this.yScale = d3.scaleLinear()
+        .domain([0, 100])
+        .range([this.origin[1], this.origin[1] + zoom * 100]);
+
+    this.reset();
+  },
+  reset: function() {
+    this.x = this.xScale(0);
+    this.y = this.yScale(0);
+    this.dx = 0;
+    this.dy = 0;
+    this.userCoordinates = [];
+    this.clearCanvas();
+    this.renderCoordinates(this.userCoordinates, this.context);
+    this.worker.postMessage({reset: true});
+  },
+  ready: function() {
+    var that = this;
+    this.color = d3.scaleSequential(d3.interpolateBrBG)
+      .domain([-3, 3]);
+    this.root = d3.select(this);
+    this.canvas = this.root.select("canvas");
+    this.userCoordinates = [];
+    this.initialize();
+    setTimeout(this.resize.bind(this), 500)
+
+    var drag = d3.drag()
+        .container(this)
+        .on("start", drawStart) // after a new pointer becomes active (on mousedown or touchstart)
+        .on("drag", draw) // after an active pointer moves (on mousemove or touchmove)
+        .on("end", drawEnd);
+
+    this.canvas.call(drag);
+
+    distill.stageManager.add(this, {
+      enterSpotlight: this.play,
+      exitSpotlight: this.pause
+    });
+
+    var context = this.context;
+    this.tempdx = 0;
+    this.tempdy = 0;
+    this.tempx = 0;
+    this.tempy = 0;
+
+    function drawStart() {
+      // if (that.userCoordinates.length) {
+      //   that.userCoordinates[that.userCoordinates.length - 1][2] = 1;
+      // }
+      that.dx = that.xScale.invert(d3.event.x) - that.xScale.invert(that.x);
+      that.dy = that.yScale.invert(d3.event.y) - that.yScale.invert(that.y);
+      that.userCoordinates.push([that.dx, that.dy, 0]);
+      that.worker.postMessage({update: [that.dx, that.dy, 0]});
+      that.clearCanvas();
+      that.renderCoordinates.call(that, that.userCoordinates, that.context);
+      that.tempdx = 0;
+      that.tempdy = 0;
+      that.tempx = d3.event.x;
+      that.tempy = d3.event.y;
+    }
+
+    function draw() {
+      that.tempdx = d3.event.dx + that.tempdx;
+      that.tempdy = d3.event.dy + that.tempdy;
+      if ((that.tempdx * that.tempdx + that.tempdy * that.tempdy) > 40) {
+        that.dx = that.xScale.invert(that.tempx) - that.xScale.invert(that.tempx - that.tempdx);
+        that.dy = that.yScale.invert(that.tempy) - that.yScale.invert(that.tempy - that.tempdy);
+        that.userCoordinates.push([that.dx, that.dy, 0]);
+        that.worker.postMessage({update: [that.dx, that.dy, 0]});
+        that.clearCanvas();
+        that.renderCoordinates.call(that, that.userCoordinates, that.context);
+        that.tempx = d3.event.x;
+        that.tempy = d3.event.y;
+        that.tempdx = 0;
+        that.tempdy = 0;
+      }
+    }
+
+    function drawEnd() {
+      if ((that.tempdx * that.tempdx + that.tempdy * that.tempdy) <= 40) {
+        that.dx = that.xScale.invert(that.tempx) - that.xScale.invert(that.tempx - that.tempdx);
+        that.dy = that.yScale.invert(that.tempy) - that.yScale.invert(that.tempy - that.tempdy);
+        that.userCoordinates.push([that.dx, that.dy, 1]);
+        that.worker.postMessage({update: [that.dx, that.dy, 1]});
+        that.clearCanvas();
+        that.renderCoordinates.call(that, that.userCoordinates, that.context);
+        that.tempx = d3.event.x;
+        that.tempy = d3.event.y;
+        that.tempdx = 0;
+        that.tempdy = 0;
+      }
+      that.x = d3.event.x;
+      that.y = d3.event.y;
+    }
+
+  },
+  clearCanvas: function() {
+    this.context.clearRect(0, 0, this.width, this.height);
+  },
+  renderCoordinates: function(coordinates, context) {
+    var that = this;
+    context.globalAlpha = 1;
+    context.strokeStyle = "#ccc";
+    context.lineWidth = 1;
+
+    context.beginPath();
+    context.arc(this.origin[0],this.origin[1], 5, 0, Math.PI * 2)
+    // context.strokeRect(this.origin[0] - 5, this.origin[1] - 5, 10, 10);
+    context.stroke();
+    context.fillStyle = "#aaa";
+    context.fillText("Pen start", this.origin[0] - 10, this.origin[1] - 10);
+    // context.beginPath();
+    // context.moveTo(this.xScale(0), this.yScale(0) - 50);
+    // context.lineTo(this.xScale(0), this.yScale(0) + 50);
+    // context.stroke();
+
+    context.beginPath();
+    context.moveTo(0, this.yScale(0) + 100);
+    context.lineTo(this.width, this.yScale(0) + 100);
+    context.stroke();
+
+    context.setLineDash([]);
+
+    context.strokeStyle = this.color(2);
+    context.fillStyle = this.color(2);
+
+    var x = 0;
+    var y = 0;
+    var penState = 1;
+
+    context.lineWidth = 1;
+    var that = this;
+    coordinates.forEach(function(c) {
+      var dx = c[0],
+          dy = c[1];
+
+      context.globalAlpha = penState ? 0.5 : 1;
+      context.setLineDash(penState ? [2] : [])
+      context.beginPath();
+      context.moveTo(that.xScale(x), that.yScale(y));
+      context.lineTo(that.xScale(x + dx), that.yScale(y + dy));
+      context.stroke();
+      context.fillRect(that.xScale(x + dx) - 1.5, that.yScale(y + dy) - 1.5, 3, 3);
+
+      penState = c[2];
+      x += dx;
+      y += dy;
+    });
+    context.setLineDash([])
+  },
+
+  renderPrediction: function(x1, y1, coordinates) {
+    this.context.fillStyle = "white";
+    this.context.globalAlpha = 0.2;
+    this.context.fillRect(0, 0, this.width, this.height);
+    this.context.strokeStyle = this.color(-1);
+    this.context.lineWidth = 1;
+    this.context.globalAlpha = 1;
+    var penState = this.userCoordinates.length ? this.userCoordinates[this.userCoordinates.length - 1][2] : 1;
+    var that = this;
+    coordinates.forEach(function(coords) {
+      var dx = coords[0],
+          dy = coords[1];
+      that.context.beginPath();
+      that.context.moveTo(that.xScale(x1), that.yScale(y1));
+      if (!penState) that.context.lineTo(that.xScale(x1 + dx), that.yScale(y1 + dy));
+      that.context.stroke();
+      penState = coords[2];
+      x1 += dx;
+      y1 += dy;
+    });
+  }
+
+
+});
+</script>

@@ -1,0 +1,106 @@
+<style>
+cells-canvas {
+  display: block;
+}
+cells-canvas canvas {
+  cursor: pointer;
+}
+</style>
+
+<dom-module id="cells-canvas">
+  <template>
+    <canvas></canvas>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "cells-canvas",
+    ready: function() {
+      var root = d3.select(this);
+      var that = this;
+
+      this.renderStep = renderStep;
+      this.renderCells = renderSteps;
+
+      if(typeof that.select !== "function")
+        that.select = function(stepIndex, cellIndex) {};
+
+      if(typeof that.getI !== "function")
+        that.getI = function(i) { return i; }
+
+      var stepLimit = 370;
+      var nCells = 500;
+
+      that.cw = 2;
+      that.ch = 1;
+      that.canvasWidth = stepLimit * that.cw;
+      that.canvasHeight = 500;
+
+      that.stepLimit = stepLimit;
+
+      var canvas = root.select("canvas")
+        .node();
+
+      var ctx = canvas.getContext("2d")
+
+      root.select("canvas")
+        .style("width", that.canvasWidth + "px")
+        .style("height", that.canvasHeight + "px")
+        .node()
+      canvas.width = that.canvasWidth;
+      canvas.height = that.canvasHeight;
+
+      var cellColorScale = d3.scaleSequential(d3.interpolateBrBG)
+        .domain([-3, 3]) // TODO: dynamically calculate?
+
+      function renderStep(step,s) {
+        var cv, x, y;
+        for(var i = 0; i < nCells; i++) {
+          cv = step[that.getI(i)];
+          ctx.fillStyle = cellColorScale(cv)
+          x = 0 + s * (that.cw)
+          y = 0 + i * (that.ch)
+          ctx.fillRect(x,y,that.cw,that.ch)
+        }
+        //stepLimit = s+1;
+      }
+
+      function renderSteps(bycell) {
+        var canvas = root.select("canvas")
+          .style("width", that.canvasWidth + "px")
+          .style("height", that.canvasHeight + "px")
+          .node()
+        canvas.width = that.canvasWidth;
+        canvas.height = that.canvasHeight;
+
+        //stepLimit = bycell[0].length
+        var step,cv,x;
+        for(var s = 0; s < that.stepLimit; s++) {
+          //step = steps[s];
+          step = bycell.map(function(cell) { return cell[s]})
+          this.renderStep(step,s)
+        }
+        ctx.fill();
+        // highlight time step/segment
+        function update(x,y) {
+
+          var s = Math.floor(x / that.cw)
+          var i = Math.floor(y / that.ch)
+          if(s < 0) s = 0;
+          if(s > that.stepLimit - 1) s = that.stepLimit - 1;
+          that.select(s,i)
+        }
+        var drag = d3.drag()
+        .on("drag", function() {
+          update(d3.event.x, d3.event.y)
+        })
+
+        root.select("canvas").call(drag)
+          .on("click", function() {
+            update(d3.event.layerX, d3.event.layerY)
+          })
+      }
+    }
+  });
+</script>

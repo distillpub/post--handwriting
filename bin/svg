@@ -1,0 +1,21 @@
+#!/usr/bin/env node
+
+var d3 = require("d3"),
+    jsdom = require("jsdom").jsdom;
+
+var body = d3.select(jsdom().documentElement).select("body");
+
+var width = 1000,
+    height = 500;
+
+var svg = body.append("svg");
+
+var svg = body.append("svg")
+    .attr("version", "1.1")
+    .attr("xmlns", d3.namespaces.svg)
+    .attr("xmlns:xlink", d3.namespaces.xlink)
+    .attr("width", width)
+    .attr("height", height)
+    .attr("viewBox", "0 0 " + width + " " + height);
+
+process.stdout.write(body.node().innerHTML);

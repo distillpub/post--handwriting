@@ -1,0 +1,83 @@
+#!/usr/bin/env node
+
+var d3 = require("d3"),
+    // nj = require("../assets/model/numjs.js"),
+    // nj = require("numjs"),
+    Model = require("../assets/model/node-bundle.js"),
+    SimpleModel = require("../assets/model/simple-model.js"),
+    ProgressBar = require('progress');
+
+var json = "";
+var coordinates = [];
+var data = [];
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('readable', () => {
+  var chunk = process.stdin.read();
+  if (chunk !== null) {
+    json += chunk.toString();
+  }
+});
+process.stdin.on('end', () => {
+  render(JSON.parse(json))
+});
+
+var futureLines = process.argv[2] ? +process.argv[2] : 50;
+var futureSteps = process.argv[3] ? +process.argv[3] : 2;
+var temperature = process.argv[4] ? +process.argv[4] : 0.65;
+
+function render(coordinates) {
+
+  var bar = new ProgressBar(':bar', { total: coordinates.length, width: 50 });
+
+  var model = new SimpleModel(Model);
+
+  var previousCoordinates = [0, 0, 0];
+  coordinates.forEach(function(c) {
+
+    var samples = model.unroll(futureSteps, futureLines, temperature);
+    var renderedSamples = []
+
+    samples.forEach(function(p) {
+      var s = {
+        segments: []
+      };
+      var x1 = 0, y1 = 0;
+      var penState = model.penState;
+      p.forEach(function(segment) {
+        s.segments.push({
+          x: model.x + model.dx + x1,
+          y: model.y + model.dy + y1,
+          dx: segment[0],
+          dy: segment[1],
+          penState: segment[2],
+          previousPenState: penState
+        });
+        x1 += segment[0];
+        y1 += segment[1];
+        penState = segment[2];
+      });
+      renderedSamples.push(s);
+    });
+
+    model.update(c[0], c[1], c[2]);
+
+    var d = {
+      x: model.x,
+      y: model.y,
+      dx: model.dx,
+      dy: model.dy,
+      penState: model.penState,
+      previousPenState: model.previousPenState,
+      penStateProbability: model.modelZ[6].get(0),
+      samples: renderedSamples
+    };
+
+    data.push(d);
+    previousCoordinates = c;
+    bar.tick();
+  });
+
+  process.stdout.write(JSON.stringify(data, null, 2));
+
+}

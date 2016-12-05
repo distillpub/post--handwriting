@@ -1,0 +1,309 @@
+<link rel="import" href="d3.html">
+
+<style>
+figure-cells-generation {
+  position: relative;
+  display: block;
+  height: 600px;
+  /*border-top: 1px solid rgba(0, 0, 0, 0.2);*/
+  /*border-bottom: 1px solid rgba(0, 0, 0, 0.2);*/
+  margin-top: 60px;
+  margin-bottom: 60px;
+}
+
+/* Canvas */
+figure-cells-generation canvas.cells {
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 500px;
+}
+figure-cells-generation canvas.overlay {
+  display: block;
+  position: absolute;
+}
+
+/* SVG */
+figure-cells-generation svg.writing {
+  display: block;
+  position: absolute;
+  top: 500px;
+  width: 100%;
+  height: 200px;
+}
+
+/* Tooltip */
+figure-cells-generation .detail {
+  position: absolute;
+  right: 0px;
+  top: 50px;
+  font-size: 12px;
+  text-align: right;
+}
+
+figure-cells-generation .controls {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+/* Pen strokes */
+figure-cells-generation svg .segment-group {
+  stroke-linecap: round;
+  fill: none;
+  stroke-width: 4px;
+  stroke: #ccc;
+}
+
+figure-cells-generation svg .penup {
+  stroke-dasharray: 3 8;
+  stroke-opacity: 0.5;
+  stroke-width: 2px;
+}
+
+</style>
+
+<template id="figure-cells-generation">
+  <canvas class="cells"></canvas>
+  <canvas class="overlay"></canvas>
+  <!-- <canvas class="overlay"></canvas> -->
+  <svg class="writing"></svg>
+
+  <div class="detail">
+    <span class="step"></span>
+    <br>
+    <span class="cell"></span>
+  </div>
+  <div class="controls">
+    <button class="play">Play</button>
+  </div>
+</template>
+
+<script>
+distill.register("figure-cells-generation", function() {
+  var that = this;
+  var root = d3.select(that);
+
+  var data = [];
+  var cells = []
+  //console.log("data", data)
+  //console.log("cells", cells)
+  var model = new SimpleModel(Model);
+
+  var highlight = "orange"
+  var normal = "#ccc"
+
+
+  var svgRaw = that.querySelector("svg.writing");
+  var canvasRaw = that.querySelector("canvas.cells");
+  var canvasOverlay = that.querySelector("canvas.overlay");
+
+  svgRaw.innerHTML = ""
+
+  var zoom = 10;
+  var stepLimit = 300;
+
+  var margin = {
+    top: 20, bottom: 20,
+    left: 20, right: 20
+  }
+
+  var bbox = svgRaw.getBoundingClientRect(),
+      width = bbox.width - margin.left - margin.right,
+      height = bbox.height - margin.top - margin.bottom;
+
+  var xScale = d3.scaleLinear()
+      .range([-width / 2, width / 2]);
+
+  var yScale = d3.scaleLinear()
+      .range([-height / 2, height / 2]);
+
+  // cell scale
+  var cellColorScale = d3.scaleSequential(d3.interpolateBrBG)
+    .domain([-5, 5]) // TODO: dynamically calculate?
+  //console.log("color", cellColorScale(0.5), cellColorScale(4.5))
+
+  var svg = d3.select(svgRaw).append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  var stage = svg.append("g")
+      .attr("class", "stage");
+
+  var pathGroup = stage.append("g").attr("class", "path-group");
+  var path = pathGroup.append("path");
+
+  var segmentGroup = stage.append("g").attr("class", "segment-group");
+
+  var cbbox = canvasRaw.getBoundingClientRect(),
+    cwidth = cbbox.width,
+    cheight = cbbox.height;
+  canvasRaw.width = cwidth;
+  canvasRaw.height = cheight;
+  //console.log("width", cwidth)
+  var ctx = canvasRaw.getContext('2d');
+
+  var owidth = cwidth;
+  var oheight = cheight;
+  canvasOverlay.width = owidth;
+  canvasOverlay.height = oheight;
+  var octx = canvasOverlay.getContext('2d');
+
+  // width of each cell
+  var cw = 3;
+
+  update();
+
+
+  var playing = false;
+  root.select(".play").on("click", function() {
+    playing = !playing
+    root.select(".play").text(playing ? "Pause" : "Play")
+  })
+  d3.timer(function() {
+    if(!playing) return;
+    if(cells.length >= stepLimit) playing = false;
+    root.select(".play").text(playing ? "Pause" : "Play")
+    update();
+  })
+
+
+  function update() {
+    var c = model.step()
+    data.push(c);
+    cells.push(pullCells(model))
+    renderPath();
+    renderCells();
+  }
+
+  function pullCells(model) {
+    var step = [];
+    for(var i = 0; i < 500; i++) {
+      step.push(model.modelS[1].get(i))
+    }
+    return step;
+  }
+
+  function renderCells() {
+    var step,cv,x;
+    var nsteps = d3.min([cells.length, stepLimit]);
+    //for(var s = 0; s < steps; s++) {
+    for(var s = 0; s < nsteps; s++) {
+      step = cells[s];
+      for(var i = 0; i < 500; i++) {
+        cv = step[i];
+        ctx.fillStyle = cellColorScale(cv)
+        x = 0 + s * (cw)
+        ctx.fillRect(x,i,cw,1)
+      }
+    }
+    ctx.fill();
+    // highlight time step/segment
+    d3.select(canvasOverlay).on("mousemove", function() {
+      var x = d3.event.layerX
+      var y = d3.event.layerY
+      //var mouse = d3.mouse(this)
+      var s = Math.floor(x / cw)
+      if(s < 0) s = 0;
+      if(s > stepLimit - 1) s = stepLimit - 1;
+      renderOverlay(s, y)
+    })
+  }
+
+  function renderOverlay(s,i) {
+    octx.clearRect(0,0,owidth,oheight);
+
+
+    if(i >= 0)
+      that.querySelector(".detail .cell").innerText = "Cell: " + i
+    that.querySelector(".detail .step").innerText = "Step: " + s
+
+    octx.strokeStyle = 'rgb(100,100,100)';
+
+    // render the crosshair box for the row
+    octx.strokeRect(s*cw - 1,0,cw+1,500)
+    var x = 0;
+
+    // render the crosshair box for the column
+    var nsteps = d3.min([cells.length, stepLimit]);
+    if(i >= 0) {
+      octx.strokeRect(0,i-5,cwidth,10)
+      var x = 0;
+      for(var j = 0; j < nsteps; j++) {
+        cv = cells[j][i];
+        octx.fillStyle = cellColorScale(cv)
+        x = 0 + j * (cw)
+        octx.fillRect(x,i-4,cw,8)
+      }
+    }
+
+    svg.selectAll("line.segment")
+    .style("stroke", function(d,j) {
+      if(i >= 0)
+        return cellColorScale(cells[j][i])
+      return normal;
+    })
+    .style("stroke-width", 4)
+    .filter(function(d) {
+      return d.s === s;
+    })
+    .style("stroke", highlight)
+    .style("stroke-width", 7)
+  }
+
+  function renderPath() {
+    xScale.domain([-(width / 2) / zoom, (width / 2) / zoom]);
+    yScale.domain([-(height / 2) / zoom, (height / 2) / zoom]);
+
+    var coordinates = data.slice(0, stepLimit)
+
+    stage.attr("transform", "translate(" + margin.left + "," + (height / 2) + ")");
+
+    // poor-mans .exit()
+    segmentGroup.selectAll("line.segment").remove();
+
+    // render individual line segments
+    var x = 0;
+    var y = 0;
+    var pen = 0;
+    coordinates.forEach(function(c,i) {
+      var segment = segmentGroup.append("line").classed("segment", true)
+      var x1 = x;
+      var y1 = y;
+      segment.attr("x1", x1)
+      segment.attr("y1", y1)
+      x += xScale(c[0])
+      y += yScale(c[1])
+      var x2 = x;
+      var y2 = y;
+      segment.attr("x2", x2)
+      segment.attr("y2", y2)
+      if (pen !== 0) {
+        segment.classed("penup", true)
+      }
+      pen = c[2];
+      segment.datum({
+        x1,y1,x2,x2,
+        s:i
+      })
+      segment.on("mouseover", function(d) {
+        renderOverlay(d.s, -1)
+        //console.log("sup", d, segment.node())
+
+      })
+      segment.on("mouseout", function(d,i) {
+        /*
+        segment
+          .style("stroke", normal)
+          .style("stroke-width", 4)
+          */
+
+      })
+    })
+
+
+
+
+  }
+
+});
+</script>

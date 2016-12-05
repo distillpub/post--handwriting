@@ -1,0 +1,120 @@
+#!/usr/bin/env node
+
+var d3 = require("d3"),
+    d3ScaleChromatic = require("d3-scale-chromatic"),
+    jsdom = require("jsdom").jsdom,
+    nj = require("../public/model/numjs.js"),
+    Model = require("../public/model/node-bundle.js"),
+    SimpleModel = require("../public/model/simple-model.js"),
+    strokes = require("../public/strokes.js");
+
+var doctype = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+              "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">";
+
+var json = "";
+var coordinates = [];
+var data = [];
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('readable', () => {
+  var chunk = process.stdin.read();
+  if (chunk !== null) {
+    json += chunk.toString();
+  }
+});
+process.stdin.on('end', () => {
+  render(JSON.parse(json))
+});
+
+var futureLines = process.argv[2] ? process.argv[2] : 50;
+var futureSteps = process.argv[3] ? process.argv[3] : 2;
+
+// var coordinates = process.argv[2] ? JSON.parse(process.argv[2]) : [];
+// console.log(process.argv)
+
+function render(coordinates) {
+
+  var body = d3.select(jsdom().documentElement).select("body");
+
+  var width = 2200,
+      height = 600;
+
+  var svg = body.append("svg")
+      .attr("version", "1.1")
+      .attr("xmlns", d3.namespaces.svg)
+      .attr("xmlns:xlink", d3.namespaces.xlink)
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", "0 0 " + width + " " + height)
+      .attr("vector-effect", "non-scaling-stroke");
+
+  var sampleStrokes = svg.append("g");
+  var mainStrokes = svg.append("g");
+
+  var model = new SimpleModel(Model);
+
+  var xScale = d3.scaleLinear()
+      .domain([-10, 30])
+      .range([0, 1000]);
+
+  var yScale = d3.scaleLinear()
+      .domain([-10, 10])
+      .range([0, 500]);
+
+  var masterStep = 0;
+
+  var clr = d3.scaleSequential(d3ScaleChromatic.interpolatePiYG).domain([-2, 2]);
+
+  var previousCoordinates = [0, 0, 0];
+  coordinates.forEach(function(c) {
+
+    var samples = model.unroll(futureSteps, futureLines);
+
+    model.update(c[0], c[1], c[2]);
+    var line = mainStrokes.append("line")
+        .style("stroke", "black")
+        .style("stroke-opacity", previousCoordinates[2] ? 0 : 1)
+        .attr("x1", xScale(model.x))
+        .attr("y1", yScale(model.y))
+        .attr("x2", xScale(model.x + model.dx))
+        .attr("y2", yScale(model.y + model.dy));
+
+    mainStrokes.append("circle")
+        .style("fill", "black")
+        .attr("r", 1.7)
+        .attr("cx", xScale(model.x))
+        .attr("cy", yScale(model.y));
+
+
+    samples.forEach(function(p) {
+      var x1 = 0, y1 = 0;
+      var penState = model.penState;
+      p.forEach(function(segment, i) {
+        x1 = x1 + segment[0];
+        y1 = y1 + segment[1];
+        var a2 = Math.atan2(y1, x1);
+        var a1 = Math.atan2(model.dy, model.dx)
+        var sign = a1 > a2 ? 1 : -1;
+        var angle = a1 - a2;
+        var K = -sign * Math.PI * 2;
+        var angle = (Math.abs(K + angle) < Math.abs(angle))? K + angle : angle;
+        if (!penState) {
+          var line = sampleStrokes.append("line")
+              // .style("stroke", angle > 0 ? "rgb(209, 74, 150)" : "rgb(102, 167, 50)") //clr(angle)
+              .style("stroke", clr(angle)) //clr(angle)
+              // .style("stroke-opacity", previousCoordinates[2] ? 0 : Math.abs(angle) * 0.2 * (futureSteps - i) / futureSteps)
+              .style("stroke-opacity", previousCoordinates[2] ? 0 : 0.4 * (futureSteps - i) / futureSteps)
+              .attr("x1", xScale(x1 - segment[0] + model.x))
+              .attr("y1", yScale(y1 - segment[1] + model.y))
+              .attr("x2", xScale(x1 + model.x))
+              .attr("y2", yScale(y1 + model.y));
+        }
+        penState = segment[2];
+      });
+    });
+    previousCoordinates = c;
+  });
+
+  process.stdout.write(doctype + body.node().innerHTML);
+
+}

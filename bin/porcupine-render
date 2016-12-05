@@ -1,0 +1,101 @@
+#!/usr/bin/env node
+
+var d3 = require("d3"),
+    d3ScaleChromatic = require("d3-scale-chromatic"),
+    jsdom = require("jsdom").jsdom;
+
+var doctype = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+              "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">";
+
+var json = "";
+var coordinates = [];
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('readable', () => {
+  var chunk = process.stdin.read();
+  if (chunk !== null) {
+    json += chunk.toString();
+  }
+});
+process.stdin.on('end', () => {
+  render(JSON.parse(json))
+});
+
+
+
+function render(coordinates) {
+  var numSamples = process.argv[2] ? process.argv[2] : coordinates[0].samples.length;
+  var numSegments = process.argv[3] ? process.argv[3] : coordinates[0].samples[0].segments.length;
+
+  var body = d3.select(jsdom().documentElement).select("body");
+
+  var width = 1800,
+      height = 600;
+
+  var svg = body.append("svg")
+      .attr("version", "1.1")
+      .attr("xmlns", d3.namespaces.svg)
+      .attr("xmlns:xlink", d3.namespaces.xlink)
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", "0 0 " + width + " " + height)
+      .attr("vector-effect", "non-scaling-stroke");
+
+  var sampleStrokes = svg.append("g");
+  var mainStrokes = svg.append("g");
+
+  var xScale = d3.scaleLinear()
+      .domain([-10, 30])
+      .range([0, 1000]);
+
+  var yScale = d3.scaleLinear()
+      .domain([-10, 10])
+      .range([0, 500]);
+
+  var continuousColor = d3.scaleSequential(d3ScaleChromatic.interpolatePiYG).domain([-2, 2]);
+  var continuousColor = d3.scaleSequential(d3ScaleChromatic.interpolateBrBG).domain([-2, 2]);
+  var thresholdColor = function(d) { return d > 0 ? continuousColor(-0.8) : continuousColor(0.8); }
+
+  coordinates.forEach(function(c) {
+
+    var line = mainStrokes.append("line")
+        .style("stroke", "black")
+        .style("stroke-opacity", c.previousPenState ? 0 : 1)
+        .attr("x1", xScale(c.x))
+        .attr("y1", yScale(c.y))
+        .attr("x2", xScale(c.x + c.dx))
+        .attr("y2", yScale(c.y + c.dy));
+
+    mainStrokes.append("circle")
+        .style("stroke", "black")
+        .style("fill", "none")
+        .attr("r", 0.7 + Math.sqrt(c.penStateProbability) * 5)
+        .attr("cx", xScale(c.x + c.dx))
+        .attr("cy", yScale(c.y + c.dy));
+
+    d3.range(numSamples).forEach(function(si) {
+      var sample = c.samples[si];
+      d3.range(numSegments).forEach(function(segi) {
+        var segment = sample.segments[segi];
+        var a2 = Math.atan2(segment.dy, segment.dx);
+        var a1 = Math.atan2(c.dy, c.dx)
+        var sign = a1 > a2 ? 1 : -1;
+        var angle = a1 - a2;
+        var K = -sign * Math.PI * 2;
+        var angle = (Math.abs(K + angle) < Math.abs(angle))? K + angle : angle;
+
+        sampleStrokes.append("line")
+            .style("stroke", thresholdColor(angle))
+            .style("stroke-opacity", segment.previousPenState === 1 ? 0 : 0.3 * (numSegments - segi) / numSegments)
+            .attr("x1", xScale(segment.x))
+            .attr("y1", yScale(segment.y))
+            .attr("x2", xScale(segment.x + segment.dx))
+            .attr("y2", yScale(segment.y + segment.dy));
+
+      });
+    });
+  });
+
+  process.stdout.write(doctype + body.node().innerHTML);
+
+}

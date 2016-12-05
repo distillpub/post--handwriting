@@ -1,0 +1,55 @@
+{
+  "main": "index.md",
+  "name": "augmented-rnns",
+  "distill": {
+    "title": "Experiments in Handwriting with a Neural Network",
+    "description": "",
+    "url": "",
+    "github": "",
+    "type": "droplet",
+    "firstPublished": "Tue Oct 18 2016 21:39:33 GMT-0700 (PDT)",
+    "lastPublished": "Tue Oct 18 2016 21:39:33 GMT-0700 (PDT)",
+    "authors": [
+      {
+        "firstName": "Shan",
+        "lastName": "Carter",
+        "personalURL": "",
+        "affiliation": "Google Brain",
+        "affiliationURL": "http://g.co/brain"
+      },
+      {
+        "firstName": "David",
+        "lastName": "Ha",
+        "personalURL": "",
+        "affiliation": "Google Brain",
+        "affiliationURL": "http://g.co/brain"
+      },
+      {
+        "firstName": "Ian",
+        "lastName": "Johnson",
+        "personalURL": "",
+        "affiliation": "Google Cloud",
+        "affiliationURL": ""
+      },
+      {
+        "firstName": "Chris",
+        "lastName": "Olah",
+        "personalURL": "",
+        "affiliation": "Google Brain",
+        "affiliationURL": "http://g.co/brain"
+      }
+    ]
+  },
+  "dependencies": {
+    "@webcomponents/custom-elements": "github:webcomponents/custom-elements",
+    "@webcomponents/shadydom": "github:webcomponents/shadydom",
+    "d3": "^4.3.0",
+    "distill-components": "^1.4.1",
+    "jsdom": "^9.8.3",
+    "ml-matrix": "^2.1.0",
+    "ml-pca": "^1.1.2",
+    "numjs": "^0.11.5",
+    "progress": "^1.1.8",
+    "webcomponents.js": "^0.7.22"
+  }
+}

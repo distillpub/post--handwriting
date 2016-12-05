@@ -1,0 +1,231 @@
+<style>
+  cells-grid {
+    display: block;
+    position: relative;
+  }
+  cells-grid .headline {
+    position: absolute;
+    top: -24px;
+    font-size: 13px;
+    line-height: 13px;
+  }
+  cells-grid svg {
+    width: 180px;
+  }
+  cells-grid .square {
+    cursor: pointer;
+  }
+</style>
+
+<dom-module id="cells-grid">
+  <template>
+    <div class="headline"></div>
+    <svg></svg>
+    <cells-target class="target"></cells-target>
+  </template>
+</dom-module>
+
+<script>
+  Polymer({
+    is: "cells-grid",
+    ready: function() {
+      /*
+      This component renders a cell vector as a 2D grid so we can show
+      all 500 cells as larger squares next to the main visualization
+      */
+      var root = d3.select(this);
+      var that = this;
+
+      this.render = render;
+
+      if(typeof that.getI !== "function")
+        that.getI = function(i) { return i; }
+
+      if(typeof that.select !== "function")
+        that.select = function(stepIndex, cellIndex) {};
+
+
+      that.cellWidth = 11;
+      that.cellHeight = 11;
+      that.width = 180;
+      that.margin = [0, 0];
+      that.offset = [1, 1];
+
+      var cellColorScale = d3.scaleSequential(d3.interpolateBrBG)
+          .domain([-3, 3]);
+
+      var svg = root.select("svg")
+
+      function render(stepIndex, cellIndex, bycell) {
+        root.select(".headline").html("Activations at <b>step " + stepIndex + "</b>")
+        var column = [];
+        if(!bycell.length) return;
+        var stepLimit = bycell[0].length
+
+        for(var j = 0; j < bycell.length; j++) {
+          //cv = steps[stepIndex][that.getI(j)];
+          cv = bycell[that.getI(j)][stepIndex];
+          column.push(cv)
+        }
+
+        var layout = new grid()
+          .cellWidth(that.cellWidth)
+          .cellHeight(that.cellHeight)
+          .width(that.width)
+          .margin(that.margin)
+          .offset(that.offset)
+
+        var squares = layout.nodes(column);
+        //console.log("squares", squares)
+
+        svg.attr("height", layout.height());
+
+        if(cellIndex < squares.length) {
+          root.select(".target")
+              .datum(squares[cellIndex])
+              .style("left", function(d) { return d.x + that.cellWidth / 2 + "px"; })
+              .style("top", function(d) { return d.y + that.cellHeight / 2 + "px"; })
+        }
+
+        var cells = svg.selectAll("rect")
+          .data(squares)
+        var cEnter = cells.enter().append("rect").classed("square", true)
+        cells.exit().remove()
+        cells = cEnter.merge(cells)
+        cells.attr("x", function(d,i) {
+            return d.x
+          })
+          .attr("y", function(d,i) {
+            return d.y
+          })
+          .attr("width", function(d,i) {
+            return that.cellWidth - 1
+           })
+          .attr("height", function(d,i) {
+            return that.cellHeight - 1
+          })
+          .attr("fill", function(d,i) {
+            if(!d.data) return "#eee";
+            return cellColorScale(d.data)
+          })
+          .attr("stroke", function(d,i) {
+            // if(cellIndex >= 0 && i === cellIndex) return "#111";
+            return "#fff";
+          })
+          .on("click", function(d,i) {
+            //console.log("i", i, "original", that.getI(i))
+            that.select(-1, i)
+          })
+        }
+      }
+  });
+
+  function grid() {
+    var data = [];
+    var nodes;
+    var width = 100;
+    var cellWidth = 10;
+    var cellHeight = 10;
+    var nColumns = 10;
+    var offset = [0,0];
+    var margin = [1,1];
+    var brick = false;
+
+    function getX(d,i) {
+      return offset[0] + (i % nColumns) * (cellWidth + margin[0])
+    }
+    function getY(d,i) {
+      return offset[1] + Math.floor(i/nColumns) * (cellHeight + margin[1])
+    }
+
+    function newNodes() {
+      nodes = [];
+      data.forEach(function(d,i) {
+        var node = {
+          x: getX(d,i),
+          y: getY(d,i),
+          data: d,
+          index: i
+        }
+        nodes.push(node);
+      })
+    }
+    newNodes();
+
+    function calculate() {
+      nodes.forEach(function(node, i) {
+        node.x = getX(node, node.index);
+        node.y = getY(node, node.index);
+        // calculate the center for convenience
+        node.cx = node.x + cellWidth/2;
+        node.cy = node.x + cellHeight/2;
+      })
+    }
+
+    this.nodes = function(val) {
+      if(val) {
+        data = val;
+        newNodes();
+      }
+      calculate();
+      return nodes;
+    }
+    this.columns = function(val) {
+    }
+    this.cellWidth = function(val) {
+      if(val) {
+        cellWidth = val;
+        this.width(width);
+        return this;
+      }
+      return cellWidth;
+    }
+    this.cellHeight = function(val) {
+      if(val) {
+        cellHeight = val;
+        return this;
+      }
+      return cellHeight;
+    }
+    this.width = function(val) {
+      if(val) {
+        width = val;
+        nColumns = Math.floor((width) / (cellWidth + margin[0])) + (brick ? 0.5 : 0);
+        //cellWidth = val / nColumns;
+        return this;
+      }
+      return width;
+    }
+    this.height = function() {
+      return Math.ceil(nodes.length / nColumns) * (cellHeight + margin[1]);
+    }
+    this.margin = function(val) {
+      if(val) {
+        margin = val;
+        this.width(width);
+        return this;
+      }
+      return margin;
+    }
+
+    this.offset = function(val) {
+      if(val) {
+        offset = val;
+        return this;
+      }
+      return offset;
+    }
+    this.brick = function(val) {
+
+      if(val === null || val === undefined) return brick;
+      if(val !== null) {
+        brick = val;
+        this.width(width);
+        return this;
+      }
+      return brick;
+    }
+
+    return this;
+  }
+</script>

@@ -1,0 +1,351 @@
+<style>
+figure-gaussian {
+  position: relative;
+  display: block;
+  height: 400px;
+  margin-top: 60px;
+  margin-bottom: 60px;
+}
+figure-gaussian .controls {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+}
+
+/* Steps */
+
+figure-gaussian .steps {
+  position: absolute;
+}
+
+figure-gaussian .steps > div {
+  position: absolute;
+  font-size: 15px;
+  line-height: 1.3em;
+  width: 120px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* SVG */
+
+figure-gaussian svg {
+  display: block;
+  height: 100%;
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
+}
+
+/* Axis */
+
+figure-gaussian svg .axis {
+  opacity: 0.2;
+}
+
+figure-gaussian svg .axis text {
+  display: none;
+}
+
+/* Gaussian distribution */
+
+figure-gaussian svg .gaussian {
+  fill: steelblue;
+  stroke: none;
+}
+
+/* Pen strokes */
+
+figure-gaussian svg .path-group {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  stroke: rgb(200, 200, 200);
+  stroke-width: 4px;
+}
+
+figure-gaussian svg .segment {
+  stroke-linecap: round;
+  fill: none;
+  stroke-width: 3px;
+}
+figure-gaussian svg .pen-tip {
+  fill: none;
+}
+figure-gaussian svg .pen-tip .graticle {
+  fill: none;
+  stroke: rgb(0, 0, 0);
+  stroke-opacity: 0.3;
+  stroke-width: 1px;
+}
+figure-gaussian svg .pen-tip .tip {
+  fill: rgb(220, 186, 118);
+  stroke: white;
+  stroke-opacity: 0.6;
+}
+figure-gaussian svg .pen-target circle {
+  fill: none;
+  stroke-width: 1px;
+  stroke: black;
+}
+</style>
+
+<dom-module id="figure-gaussian">
+  <template>
+    <svg></svg>
+    <div class="steps">
+      <div class="step-0">
+        <div style="border-top: 1px solid rgba(0,0,0,0.2);width: 30px;"></div>
+        <div style="position:absolute;top:-6px;left:40px;width: 120px;">Twenty gaussian distributions are generated…</div>
+      </div>
+      <div class="step-1">
+        <div style="border-top: 1px solid rgba(0,0,0,0.2);width: 30px;"></div>
+        <div style="position:absolute;top:-6px;left:40px;width: 120px;">…a random point sample is taken…</div>
+      </div>
+      <div class="step-2">
+      <div style="position:absolute;top:-6px;left:40px;width: 120px;">…those new coordinates are fed back into the model.</div>
+      </div>
+      <div class="step-3">
+        Rinse and repeat.
+      </div>
+    </div>
+  </template>
+</dom-module>
+
+<script>
+Polymer({
+  is: "figure-gaussian",
+  ready: function() {
+    var model = new SimpleModel(Model);
+    var playing = false;
+    var root = d3.select(this);
+
+    root.select(".play").on("click", function() { if (playing = !playing) update(); });
+    root.select(".restart").on("click", function() { model.reset(); playing = true; update(); });
+
+    var svgRaw = this.querySelector("svg");
+
+    var margin = {
+      top: 20, bottom: 20,
+      left: 20, right: 20
+    }
+    var that = this;
+
+    requestAnimationFrame(function() {
+      ready.call(that);
+      distill.stageManager.add(that, {
+        enterStage: this.play,
+        exitStage: this.pause
+      });
+    });
+
+    function ready() {
+      var bbox = this.getBoundingClientRect(),
+          width = bbox.width - margin.left - margin.right,
+          height = bbox.height - margin.top - margin.bottom;
+
+      var xScale = d3.scaleLinear()
+          .range([-width / 2, width / 2]);
+
+      var yScale = d3.scaleLinear()
+          .range([-height / 2, height / 2]);
+
+      var svg = d3.select(svgRaw).append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      root.select(".steps")
+          .style("left", margin.left + "px")
+          .style("top", margin.top + "px");
+
+      var stage = svg.append("g")
+          .attr("class", "stage");
+
+      var xAxis = d3.axisBottom(xScale);
+      var xAxisGroup = stage.append("g").attr("class", "x axis");
+
+      var yAxis = d3.axisRight(yScale);
+      var yAxisGroup = stage.append("g").attr("class", "y axis");
+
+      var pathGroup = stage.append("g").attr("class", "path-group");
+      var path = pathGroup.append("path");
+
+      var gaussianGroup = stage.append("g").attr("class", "gaussian-group");
+      var gaussian = gaussianGroup.selectAll(".gaussian")
+            .data(d3.range(20)) //TODO don't hardcode this num of gaussians.
+          .enter().append("circle")
+            .attr("class", "gaussian");
+
+      var penTarget = stage.append("g")
+          .attr("class", "pen-target");
+
+      penTarget.append("circle")
+          .attr("r", 4);
+
+      var segment = stage.append("line").attr("class", "segment");
+      var penTip = stage.append("g")
+          .attr("class", "pen-tip");
+
+      penTip.append("circle")
+          .attr("class", "tip")
+          .attr("r", 3)
+          .style("fill", "rgb(220, 186, 118)");
+
+      var zoom = 300;
+      var pen = 0;
+      var rawDurations = [
+        3000,
+        3000,
+        3000,
+        2000
+      ];
+
+      var steps = d3.range(4).map(function(i) { return root.select(".step-" + i); });
+
+      function update() {
+        if (!playing) return;
+
+        var coordinates = model.step();
+
+        var durations = rawDurations.map(function(d) { return model.coordinates.length > 2 ? Math.max(50, d / model.coordinates.length - 3) : d; });
+
+        zoom = Math.max(20, 300 / Math.pow(model.coordinates.length + 1, 0.8));
+
+        xScale.domain([-(width / 2) / zoom, (width / 2) / zoom]);
+        yScale.domain([-(height / 2) / zoom, (height / 2) / zoom]);
+
+        xAxisGroup.call(xAxis);
+        yAxisGroup.call(yAxis);
+
+        stage.attr("transform", "translate(" + width / 2 + "," + (height / 2) + ")");
+
+        // Update the strokes to include the previous pen stroke.
+        path
+            .style("stroke-width", 3)
+            .attr("d", function() {
+              var d = "M0,0",
+                  pen = 0;
+              model.coordinates.slice(0, -1).forEach(function(c) {
+                if (pen === 0) {
+                  d += "l" + xScale(c[0]) + "," + yScale(c[1]);
+                } else {
+                  d += "m" + xScale(c[0]) + "," + yScale(c[1]);
+                }
+                pen = c[2];
+              });
+              return d;
+            });
+
+
+        // Step 0
+        steps[0]
+            .style("left", xScale(model.x + model.dx) + width / 2 + 20 + "px")
+            .style("top", yScale(model.y + model.dy) + height / 2 + "px")
+            .style("opacity", 0)
+          .transition().duration(durations[0] / 3)
+            .style("opacity", model.coordinates.length > 2 ? 0 : 1)
+          .transition().delay(durations[0] / 3).duration(durations[0] / 3)
+            .style("opacity", 0);
+
+        gaussian
+            .attr("r", 2)
+            .attr("transform", function(d) {
+              var g = model.modelZ;
+              var mu1 = g[1].get(d);
+              var mu2 = g[2].get(d);
+              var std1 = g[3].get(d);
+              var std2 = g[4].get(d);
+              var rho = g[5].get(d);
+              var A = Math.sqrt(1-rho*rho)*std1,
+                  B = rho*std1,
+                  C = std2;
+              return "matrix(" + [A * zoom, 0, B * zoom, C * zoom, xScale(model.x) + mu1 * zoom, yScale(model.y) + mu2 * zoom] + ")";
+            })
+            .style("opacity", function(d) { return model.modelZ[0].get(d); })
+
+        gaussianGroup
+            .style("opacity", 0)
+          .transition().duration(durations[0] / 3)
+            .style("opacity", durations[1] > 100 ? 1 : 0)
+          .transition().delay(durations[0] + durations[1] / 2).duration(durations[1] / 2)
+            .style("opacity", 0);
+
+        // Step 2
+
+        steps[1]
+            .style("left", xScale(model.x + model.dx) + width / 2 + "px")
+            .style("top", yScale(model.y + model.dy) + height / 2 + "px")
+            .style("opacity", 0)
+          .transition().delay(durations[0]).duration(durations[1] / 3)
+            .style("opacity", model.coordinates.length > 2 ? 0 : 1)
+          .transition().delay(durations[1] / 3).duration(durations[1] / 3)
+            .style("opacity", 0);
+
+        penTarget
+            .attr("transform", "translate(" + xScale(model.x + model.dx) + "," + yScale(model.y + model.dy) + ")")
+            .style("opacity", 0)
+          .transition().delay(durations[0]).duration(durations[1] / 2)
+            .style("opacity", durations[1] > 200 ? 1 : 0)
+
+
+        // Step 3
+
+        steps[2]
+            .style("left", xScale(model.x + model.dx) + width / 2 + "px")
+            .style("top", yScale(model.y + model.dy) + height / 2 + "px")
+            .style("opacity", 0)
+          .transition().delay(durations[0] + durations[1]).duration(durations[2] / 3)
+            .style("opacity", model.coordinates.length > 2 ? 0 : 1)
+          .transition().delay(durations[2] / 3).duration(durations[2] / 3)
+            .style("opacity", 0);
+
+        penTip
+            .attr("transform", "translate(" + xScale(model.x) + "," + yScale(model.y) + ")")
+          .transition().delay(durations[0] + durations[1]).duration(durations[2] / 4).ease(d3.easeLinear)
+            .attr("transform", "translate(" + xScale(model.x + model.dx) + "," + yScale(model.y + model.dy) + ")");
+
+        segment
+            .attr("x1", xScale(model.x))
+            .attr("y1", yScale(model.y))
+            .attr("x2", xScale(model.x))
+            .attr("y2", yScale(model.y))
+            .style("stroke", model.previousPenState ? "rgba(0, 0, 0, 0)" : "rgb(220, 186, 118)")
+
+          .transition().delay(durations[0] + durations[1]).duration(durations[2] / 4).ease(d3.easeLinear)
+            .attr("x2", xScale(model.x + model.dx))
+            .attr("y2", yScale(model.y + model.dy))
+          .transition().duration(3 * durations[2] / 4)
+            .style("stroke", model.previousPenState ? "rgba(0, 0, 0, 0)" : "rgb(220, 186, 118)")
+            .on("end", update);
+
+
+        // Step 4
+        // steps[3]
+        //     .style("left", xScale(model.x + model.dx) + width / 2 + "px")
+        //     .style("top", yScale(model.y + model.dy) + height / 2 + "px")
+        //     .style("opacity", 0)
+        //   .transition().delay(durations[0] + durations[1]+ durations[2]).duration(durations[3] / 2)
+        //     .style("opacity", 1)
+        //   .transition().delay(durations[3] / 3).duration(durations[3] / 3)
+        //     .style("opacity", 0)
+
+      }
+
+      //
+      playing = true;
+      update();
+      playing = false;
+    }
+  },
+  playToggle: function() {
+
+  },
+  play: function() {
+
+  },
+  pause: function() {
+
+  }
+
+});
+</script>

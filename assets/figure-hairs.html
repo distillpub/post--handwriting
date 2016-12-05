@@ -1,0 +1,74 @@
+<link rel="import" href="distill-deck.html">
+
+<style>
+  figure-hairs {
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+  figure-hairs distill-deck {
+    width: 1200px;
+    height: 400px;
+    position: relative;
+    margin: 0 auto;
+    mix-blend-mode: multiply;
+  }
+  figure-hairs img {
+    height: 100%;
+  }
+</style>
+
+<dom-module id="figure-hairs">
+  <template>
+    <content></content>
+    <distill-deck class="deck">
+      <img>
+      <img>
+      <img>
+      <img>
+      <img>
+      <img>
+      <img>
+      <img>
+      <img>
+    </distill-deck>
+  </template>
+</dom-module>
+
+<script>
+"use strict";
+Polymer({
+  is: "figure-hairs",
+  ready: function() {
+    var that = this;
+    var deck = this.querySelector(".deck");
+    var images = [].slice.call(this.querySelectorAll(".deck img"));
+
+    var sampleSelect = this.querySelector(".sample");
+    sampleSelect.addEventListener("change", () => updateSample());
+    var stepSelect = this.querySelector(".step");
+    stepSelect.addEventListener("input", () => updateStep());
+    var temperatureSelect = this.querySelector(".temperature");
+    temperatureSelect.addEventListener("input", () => updateStep());
+
+    requestAnimationFrame(updateSample);
+    var steps = [2, 4, 8];
+    var temperatures = [0.3, 0.50, 0.65];
+    var temperaturePaths = ["30", "50", "65"];
+
+    function updateSample() {
+      images.forEach((image, i) => {
+        image.src = "assets/strokes/jpg/" + sampleSelect.value + "-" + temperaturePaths[Math.floor(i / 3)] + "-" + steps[(i % 3)] + ".jpg"
+      });
+      updateStep();
+    }
+
+    function updateStep() {
+      var index = +stepSelect.value + temperatureSelect.value * 3;
+      deck.setAttribute("index", index);
+      that.querySelector(".value").textContent = steps[stepSelect.value];
+      that.querySelector(".temperature-val").textContent = temperatures[temperatureSelect.value];
+    }
+  }
+});
+</script>

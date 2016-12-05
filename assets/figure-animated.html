@@ -1,0 +1,111 @@
+<style>
+figure-animated {
+  position: relative;
+  display: block;
+  height: 300px;
+}
+figure-animated .controls {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+}
+figure-animated svg {
+  display: block;
+  height: 300px;
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
+}
+figure-animated svg path {
+  fill: none;
+  stroke: rgb(220, 186, 118);
+  stroke-width: 2px;
+}
+</style>
+
+<dom-module id="figure-animated">
+  <template>
+    <svg></svg>
+  </template>
+</dom-module>
+
+<script>
+Polymer({
+  is: "figure-animated",
+  ready: function() {
+    this.playing = false;
+
+    var that = this;
+    var root = d3.select(this);
+
+    var svgRaw = this.querySelector("svg");
+
+    var margin = {top: 20, bottom: 20, left: 50, right: 20};
+
+    this.svg = d3.select(svgRaw).append("g")
+        .attr("transform", "translate(" + margin.left + "," + (margin.top + 300 / 2) + ")");
+
+    this.path = this.svg.append("path"),
+    this.d = "";
+    this.penState = 0;
+    this.xScale = d3.scaleLinear()
+        .range([0, 7]);
+    this.yScale = d3.scaleLinear()
+        .range([0, 7]);
+
+    this.w = new Worker("assets/worker.js");
+    this.w.onmessage = function(e) { that.workerMessage(e); }
+
+    this.temperature(+this.getAttribute("temperature"))
+
+    distill.stageManager.add(this, {
+      enterStage: this.play,
+      exitStage: this.pause
+    });
+  },
+  workerMessage: function(e) {
+    var dx = e.data[0],
+        dy = e.data[1],
+        x = e.data[3],
+        y = e.data[4];
+
+    // This is a reset state
+    if (x === 0 && y === 0) {
+      this.svg.selectAll("path").transition().style("opacity", 0).remove();
+      this.path = this.svg.append("path");
+      this.d = "M0,0";
+    }
+
+    // Pen is down
+    if (this.penState == 0) {
+      this.d += "l" + this.xScale(dx) + "," + this.yScale(dy);
+
+    // Pen is up
+    } else {
+      this.d += "m" + this.xScale(dx) + "," + this.yScale(dy);
+    }
+    this.path.attr("d", this.d);
+    this.penState = e.data[2];
+
+    // If playing, continue...
+    if (this.playing) this.step();
+  },
+  temperature: function(temp) {
+    this.w.postMessage({key: "temperature", value: +temp});
+  },
+  step: function() {
+    this.w.postMessage({key: "step"});
+  },
+  togglePlay: function() {
+    if (this.playing = !this.playing) this.step();
+  },
+  play: function() {
+    this.playing = true;
+    this.step();
+  },
+  pause: function() {
+    this.playing = false;
+  }
+});
+</script>

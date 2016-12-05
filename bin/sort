@@ -1,0 +1,106 @@
+#!/usr/bin/env node
+
+/*
+  Takes in strokes.
+  //Write out a csv of cell values.
+  Write out a JSON of cell values. an array of rows.
+  each row is a step and each element is a cell (column)
+*/
+
+
+var tsnejs = require('../assets/tsne.js');
+var d3 = require('d3')
+var ProgressBar = require('progress');
+
+var json = "";
+
+process.stdin.setEncoding('utf8');
+process.stdin.on('readable', () => {
+  var chunk = process.stdin.read();
+  if (chunk !== null) {
+    json += chunk.toString();
+  }
+});
+process.stdin.on('end', () => {
+  str = json.split('\n')
+  json = "[" + str.slice(1) + "]"
+  extract(JSON.parse(json))
+});
+
+function extract(samples) {
+  var stepLimit = 370;
+  var STEPS = 4000
+  var bar = new ProgressBar(':bar', { total: STEPS, width: 50 });
+
+
+  var steps = samples[0]
+  //console.log("step", steps.length)
+
+  var bycell = d3.range(500).map(function() { return [] })
+  for(var i = 0; i < stepLimit; i++) {
+    // basically transposing...
+    for(var j = 0; j < bycell.length; j++) {
+      bycell[j][i] = steps[i][j]
+    }
+  }
+
+  bycell.forEach(function(cell,i) {
+    //var negative = cell.reduce(function(sum, d) { return d < 0 ? sum + 1 : sum }, 0)
+    //if(negative > 50) bycell[i] = cell.map(function(d) { return d * -1 })
+    //if(negative > 100) cell = cell.map(function(d) { return d * -1 })
+    var sum = d3.sum(cell)
+    if(sum < 0) cell = cell.map(function(d) { return d * -1 })
+
+    var blurred = []
+    var blur = [0.1, 0.2, 0.2]
+    blurred.push(cell[0])
+    blurred.push(cell[1])
+    blurred.push(cell[2])
+    for(var j = 3; j < cell.length - 3; j++) {
+      var value = cell[j-3] * blur[0] + cell[j-2] * blur[1] + cell[j-1] * blur[2] + cell[j] + cell[j+1] * blur[2] + cell[j+2] * blur[1] + cell[j+3] * blur[0]
+      //var value = cell[j-2] * 0.2 + cell[j-1] * 0.4 + cell[j] + cell[j+1] * 0.4 + cell[j+2] * 0.2
+      //cell[j] += cell[j+1] * 0.1;
+      blurred.push(value)
+    }
+    blurred.push(cell[cell.length-3])
+    blurred.push(cell[cell.length-2])
+    blurred.push(cell[cell.length-1])
+    bycell[i] = blurred;
+    //var mean = d3.mean(cell)
+    //bycell[i] = cell.map(function(d) { return d - mean })
+    //cell = cell.map(function(d) { return d - mean })
+    /*
+    var extent = d3.extent(cell)
+    var cscale = d3.scaleLinear().domain(extent)
+      .range([0,1])
+    bycell[i] = cell.map(function(d) { return cscale(d)})
+    */
+  })
+
+  // TSNE calculations on all 500 cells
+  //console.log("TSNE")
+  var opt = {}
+  opt.epsilon = 10; // epsilon is learning rate (10 = default)
+  opt.perplexity = 50; // roughly how many neighbors each point influences (30 = default)
+  opt.dim = 1; // dimensionality of the embedding (2 = default)
+  var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
+
+  tsne.initDataRaw(bycell);
+
+  for(var k = 0; k < STEPS; k++) {
+    //console.log("step", k)
+    bar.tick();
+    tsne.step(); // every time you call this, solution gets better
+  }
+  out = tsne.getSolution().map(function(d) { return d[0] });
+  //console.log("tsne solution", out)
+
+  var indexes = d3.range(bycell.length)
+  indexes.sort(function(a,b) {
+    return out[b] - out[a]
+  })
+
+  //console.log("indexes", indexes)
+  process.stdout.write(JSON.stringify(indexes))
+
+}

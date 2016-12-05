@@ -1,0 +1,194 @@
+<link rel="import" href="../distill/distill.html">
+<link rel="import" href="d3.html">
+
+<style>
+figure-style button {
+}
+figure-style canvas {
+  box-sizing: border-box;
+  display: inline-block;
+  border: 1px solid cyan;
+  width: 50%;
+  height: 500px;
+}
+</style>
+
+<template id="figure-style">
+  <button class="reset">Reset Model</button>
+  <button class="redraw">Draw Sample</button>
+  <button class="predict">Make Prediction</button>
+  <br>
+  <canvas class="input"></canvas><canvas class="output"></canvas>
+</template>
+
+<script>
+distill.register("figure-style", function() {
+  var root = d3.select(this);
+  root.select(".redraw").on("click", function() { redraw(); })
+  root.select(".reset").on("click", function() { resetModel(); })
+
+  var xScale = d3.scaleLinear()
+      .domain([0, 100])
+      .range([100, 900]);
+
+  var yScale = d3.scaleLinear()
+      .domain([0, 100])
+      .range([200, 1000]);
+
+  var x = 0, y = 0, penState = 0, userCoordinates;
+
+  var inputCanvas = root.select("canvas.input");
+  var canvasWidth = inputCanvas.node().getBoundingClientRect().width;
+  var canvasHeight = inputCanvas.node().getBoundingClientRect().height;
+  inputCanvas.node().width = canvasWidth;
+  inputCanvas.node().height = canvasHeight;
+  var inputContext = inputCanvas.node().getContext("2d");
+
+  var outputCanvas = root.select("canvas.output");
+  outputCanvas.node().width = outputCanvas.node().getBoundingClientRect().width;
+  outputCanvas.node().height = outputCanvas.node().getBoundingClientRect().height;
+  var outputContext = outputCanvas.node().getContext("2d");
+
+  var drag = d3.drag()
+      .container(inputCanvas.node())
+      .on("start", drawStart)
+      .on("drag", draw)
+      .on("end", drawEnd);
+  // start - after a new pointer becomes active (on mousedown or touchstart).
+  // drag - after an active pointer moves (on mousemove or touchmove).
+  // end
+
+  inputContext.strokeStyle = "black";
+  inputContext.lineWidth = 1;
+  function drawStart() {
+    var dx = xScale.invert(d3.event.x) - xScale.invert(x);
+    var dy = yScale.invert(d3.event.y) - yScale.invert(y);
+    if (x === 0 && y === 0) {
+      dx = 0;
+      dy = 0;
+    }
+    userCoordinates.push([dx, dy, penState]);
+    renderCoordinates(userCoordinates, inputCanvas);
+
+  }
+  function draw() {
+    x = d3.event.x;
+    y = d3.event.y;
+    inputContext.beginPath();
+    inputContext.moveTo(x - d3.event.dx, y - d3.event.dy)
+    inputContext.lineTo(x, y);
+    inputContext.stroke();
+    inputContext.strokeRect(x - d3.event.dx - 1, y - d3.event.dy - 1, 2, 2);
+    var dx = xScale.invert(x) - xScale.invert(x - d3.event.dx);
+    var dy = yScale.invert(y) - yScale.invert(y - d3.event.dy);
+    userCoordinates.push([dx, dy, penState]);
+    renderCoordinates(userCoordinates, inputCanvas);
+    penState = 0;
+  }
+
+  function drawEnd() {
+    x = d3.event.x;
+    y = d3.event.y;
+    var dx = xScale.invert(x) - xScale.invert(x - d3.event.dx);
+    var dy = yScale.invert(y) - yScale.invert(y - d3.event.dy);
+    userCoordinates.push([dx, dy, penState]);
+    renderCoordinates(userCoordinates, inputCanvas);
+    penState = 1;
+    updateModel(userCoordinates);
+
+  }
+
+  inputCanvas.call(drag);
+
+  // we should draw this.
+
+  function redraw() {
+    var coordinates = rollout(400);
+    renderCoordinates(coordinates, outputContext);
+  }
+
+  //
+  // Draw
+  //
+
+  function renderCoordinates(coordinates, context) {
+    context.globalAlpha = 0.9;
+    context.fillStyle = "white";
+    context.fillRect(0, 0, canvasWidth, canvasHeight);
+    context.globalAlpha = 1.0;
+    context.fillStyle = "rgba(255,0,0,0.3)";
+
+    var x = 0,
+        y = 0,
+        penState = 0;
+
+    coordinates.forEach(function(c) {
+      var dx = c[0],
+          dy = c[1];
+
+      context.beginPath();
+      context.moveTo(xScale(x), yScale(y));
+      if (!penState) context.lineTo(xScale(x + dx), yScale(y + dy));
+      context.stroke();
+      context.fillRect(xScale(x) - 2, yScale(y) - 2, 4, 4);
+
+      penState = c[2];
+      x += dx;
+      y += dy;
+    });
+  }
+
+
+  //
+  // Model functions
+  //
+
+  var modelX;
+  var modelS;
+
+  resetModel();
+
+  function resetModel() {
+    modelX = Model.random_input();
+    modelS = Model.random_state();
+    userCoordinates = [];
+  }
+
+  function updateModel(dx, dy, penState) {
+    modelX.set(0, dx);
+    modelX.set(1, dy);
+    modelX.set(2, penState);
+    modelS = Model.update(modelX, modelS);
+  }
+
+  function rollout(steps) {
+    var coordinates = [];
+    var dx = 0,
+        dy = 0;
+    var penState = 0;
+
+    var localModelX;
+    var localModelZ;
+    var localModelS = [
+      modelS[0].clone(),
+      modelS[1].clone()
+    ];
+
+    for (var i = 0; i < steps; i++) {
+      localModelZ = Model.get_mixture_coef(localModelS);
+
+      localModelX = Model.sample(localModelZ);
+      dx = localModelX.get(0);
+      dy = localModelX.get(1);
+      penState = localModelX.get(2);
+
+      coordinates.push([dx, dy, penState]);
+
+      localModelS = Model.update(localModelX, localModelS);
+    }
+    return coordinates;
+
+  }
+
+
+});</script>
