@@ -81,20 +81,29 @@ Polymer({
 
     d3.json("assets/metadata.json", function(error, meta) {
       var sortOrder = meta.sortOrder;
+      var flipCell = meta.flipCell
 
       var steps = [];
       var bycell = [];
       var stepLimit = 370;
       var nCells = 500;
 
+
+      function updateByCellSingle(step, si) {
+        for(var i = 0; i < nCells; i++) {
+          bycell[i][si] = steps[si][i] * flipCell[i];
+        }
+      }
+
       function updateByCell(steps) {
         // TODO: try not to have to do this on every step
-        bycell = d3.range(500).map(function() { return [] })
+        bycell = d3.range(nCells).map(function() { return [] })
         for(var i = 0; i < steps.length; i++) {
-          for(var j = 0; j < bycell.length; j++) {
-            bycell[j][i] = steps[i][j]
+          for(var j = 0; j < nCells; j++) {
+            bycell[j][i] = steps[i][j] * flipCell[j]
           }
         }
+        /*
         bycell.forEach(function(cell,i) {
           //var negative = cell.reduce(function(sum, d) { return d < 0 ? sum + 1 : sum }, 0)
           //if(negative > 50) bycell[i] = cell.map(function(d) { return d * -1 })
@@ -103,6 +112,7 @@ Polymer({
           if(sum < 0) cell = cell.map(function(d) { return d * -1 })
           bycell[i] = cell;
         });
+        */
       }
       that.updateByCell = updateByCell;
 
@@ -146,16 +156,19 @@ Polymer({
 
       cellsDraw.update = function(newSteps, si) {
         steps = newSteps;
-        updateByCell(steps);
+        if(si === 0) {
+          updateByCell(steps);
+        } else {
+          updateByCellSingle(steps[si], si);
+        }
         //var s = newSteps.length - 1
-        var s = si;
         //console.log("new steps", s, steps)
-        var step = bycell.map(function(cell) { return cell[s]})
-        cellsCanvas.renderStep(step, s);
-        cellsCanvas.stepLimit = d3.max([steps.length, s+1]);
-        if(s === 0)
+        var step = bycell.map(function(cell) { return cell[si]})
+        cellsCanvas.renderStep(step, si);
+        cellsCanvas.stepLimit = d3.max([steps.length, si+1]);
+        if(si === 0)
           cellsCanvas.renderCells(bycell);
-        update(s, -1);
+        update(si, -1);
       }
 
       // render the cell visualization
