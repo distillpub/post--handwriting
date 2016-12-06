@@ -3,7 +3,7 @@
   "name": "augmented-rnns",
   "distill": {
     "title": "Experiments in Handwriting with a Neural Network",
-    "description": "",
+    "description": "Several interactive visualizations of a generative model of handwriting. Some are fun, some are serious.",
     "url": "",
     "github": "",
     "firstPublished": "Tue Oct 18 2016 21:39:33 GMT-0700 (PDT)",
