@@ -246,7 +246,7 @@ d3.select("html head").append("meta")
 
   <p>Is there a way to order the cells to make this structure clearer? We've found that applying one-dimensional <a href="https://lvdmaaten.github.io/tsne/">t-SNE</a> to the activations of the cells over time can organize them, bringing cells with similar behavior close together. This makes the diagram easier to read. We use a few small tricks to achieve the best results.<sup><a href="#footnote3">3</a></sup></p>
 
-  <figure-cells class="w-page" mode="sorted" defaults="71,0"></figure-cells>
+  <figure-cells class="w-page" mode="sorted" defaults="55,0"></figure-cells>
 
   <p>In this version we can find a few clear behaviors. For example, cells <a onclick="cellClick(11)">11</a>-<a onclick="cellClick(70)">70</a> at the top seem sensitive to slightly different directions and curvatures of the pen path -- see in particular cells <a onclick="cellClick(25)">25</a> and <a onclick="cellClick(55)">55</a>. On the other hand, at the bottom, cells below <a onclick="cellClick(427)">427</a> seem focused on pen lifts; for example, cell <a onclick="cellClick(494)">494</a> seems to predict whether the pen is about to be lifted. In the middle, we see a variety of cells, including some tracking absolute position. Cell <a onclick="cellClick(136)">136</a> and its neighbors seem concerned with horizontal position, while cells around <a onclick="cellClick(236)">236</a> seem concerned with vertical position. Cell <a onclick="cellClick(242)">242</a> appears to track position within a word. </p>
 
@@ -260,7 +260,7 @@ d3.select("html head").append("meta")
   <div class="controls w-page" id="figure-cells-draw-controls" style="margin-top: 36px;">
     <button onclick="document.querySelector('figure-cells-draw').clear()">Clear</button>
   </div>
-  <figure-cells-draw class="w-page" mode="sorted" defaults="71,0"></figure-cells-draw>
+  <figure-cells-draw class="w-page" mode="sorted" defaults="55,0"></figure-cells-draw>
 
   <hr>
 
