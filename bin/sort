@@ -12,6 +12,48 @@ var tsnejs = require('../assets/tsne.js');
 var d3 = require('d3')
 var ProgressBar = require('progress');
 
+
+function mean(l){ return l.reduce((a,b) => a+b, 0)/l.length;}
+
+function convolve(l, k){
+  var D = Math.floor((k.length-1)/2);
+  var ret = []
+  for (var i = D; i < l.length-k.length+1+D; i++){
+    var val = 0;
+    for (var j = 0; j < k.length; j++){
+      val += k[j]*l[i+j-D];
+    }
+    ret.push(val);
+  }
+  return ret;
+}
+
+function percentiles(l, slices){
+  var L = l.slice().sort();
+  var N = L.length;
+  var D = N/slices;
+  var ret = [];
+  for (var i = 0; i < slices; i++){
+    var a = Math.floor(i*D), b = Math.floor((i+1)*D);
+    var sum = 0;
+    for (var j = a; j < b; j++) {
+      sum += L[j]
+    }
+    ret.push(sum/(b-a));
+  }
+  return ret;
+}
+
+function percentileMap(l, n, m, step){
+  step = step || 1;
+  var l_percentiles = [];
+  for(var j = 0; j < n; j++) { l_percentiles.push([]); }
+  for(var j = 0; j < l.length - n; j += step) {
+    percentiles(l.slice(j, j+n),m).forEach( (x,j) => l_percentiles[j].push(x))
+  }
+  return l_percentiles;
+}
+
 var json = "";
 
 process.stdin.setEncoding('utf8');
@@ -50,6 +92,8 @@ function extract(samples) {
     //if(negative > 50) bycell[i] = cell.map(function(d) { return d * -1 })
     //if(negative > 100) cell = cell.map(function(d) { return d * -1 })
     var sum = d3.sum(cell)
+
+    var sum = d3.sum(cell)
     if(sum < 0) {
       cell = cell.map(function(d) { return d * -1 })
       flipCell[i] = -1
@@ -58,29 +102,40 @@ function extract(samples) {
     }
 
     var blurred = []
-    var blur = [0.1, 0.2, 0.2]
-    blurred.push(cell[0])
-    blurred.push(cell[1])
-    blurred.push(cell[2])
-    for(var j = 3; j < cell.length - 3; j++) {
-      var value = cell[j-3] * blur[0] + cell[j-2] * blur[1] + cell[j-1] * blur[2] + cell[j] + cell[j+1] * blur[2] + cell[j+2] * blur[1] + cell[j+3] * blur[0]
-      //var value = cell[j-2] * 0.2 + cell[j-1] * 0.4 + cell[j] + cell[j+1] * 0.4 + cell[j+2] * 0.2
-      //cell[j] += cell[j+1] * 0.1;
-      blurred.push(value)
-    }
-    blurred.push(cell[cell.length-3])
-    blurred.push(cell[cell.length-2])
-    blurred.push(cell[cell.length-1])
+
+
+    var derivs = convolve(cell, [-1,1]);
+    var derivsAbs = derivs.map(Math.abs);
+
+    //convolve(cell, [0.2,1,0.2]).forEach(x => blurred.push(x))
+    //percentileMap(derivs, 5, 5, 1).forEach(l => l.forEach(x => blurred.push(x)))
+    //percentileMap(cell, 5, 5, 1)
+    //  .forEach(l => l.forEach(x => blurred.push(x)))
+    percentileMap(cell, 5, 5, 1)
+      .forEach(l => l.forEach(x => blurred.push(x)))
+    percentileMap(cell, 5, 5, 1).map(l =>convolve(l, [0.2, 0.4, 1, 0.4, 0.2]))
+      .forEach(l => l.forEach(x => blurred.push(x)))
+    //percentileMap(cell, 20, 10, 1)
+    //  .forEach(l => l.forEach(x => blurred.push(x/2)))
+    //percentileMap(derivsAbs, 5, 5, 1)
+    //  .forEach(l => l.forEach(x => blurred.push(x)))
+    //percentileMap(derivs, 5, 5, 1)
+    //  .forEach(l => l.forEach(x => blurred.push(x)))
+    //percentileMap(convolve(cell, [-0.5,0,1,0,-0.5]).map(Math.abs), 5,5,1)
+    //  .forEach(l => l.forEach(x => blurred.push(x)))
+
+
+
     bycell[i] = blurred;
+
     //var mean = d3.mean(cell)
     //bycell[i] = cell.map(function(d) { return d - mean })
     //cell = cell.map(function(d) { return d - mean })
-    /*
-    var extent = d3.extent(cell)
+
+    /*var extent = d3.extent(cell)
     var cscale = d3.scaleLinear().domain(extent)
       .range([0,1])
-    bycell[i] = cell.map(function(d) { return cscale(d)})
-    */
+    bycell[i] = cell.map(function(d) { return cscale(d)})*/
   })
   console.log("flip cell\n")
   process.stdout.write(JSON.stringify(flipCell))
