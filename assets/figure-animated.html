@@ -2,7 +2,8 @@
 figure-animated {
   position: relative;
   display: block;
-  height: 300px;
+  height: 250px;
+  /*margin-bottom: -100px;*/
 }
 figure-animated .controls {
   position: absolute;
@@ -12,10 +13,12 @@ figure-animated .controls {
 }
 figure-animated svg {
   display: block;
-  height: 300px;
+  height: 500px;
   position: absolute;
+  top: -125px;
   width: 100%;
   pointer-events: none;
+  z-index: 1;
 }
 figure-animated svg path {
   fill: none;
@@ -44,7 +47,7 @@ Polymer({
     var margin = {top: 20, bottom: 20, left: 50, right: 20};
 
     this.svg = d3.select(svgRaw).append("g")
-        .attr("transform", "translate(" + margin.left + "," + (margin.top + 300 / 2) + ")");
+        .attr("transform", "translate(" + margin.left + "," + (margin.top + 500 / 2) + ")");
 
     this.path = this.svg.append("path"),
     this.d = "";
