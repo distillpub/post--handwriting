@@ -22,7 +22,6 @@ process.stdin.on('end', () => {
 });
 
 
-
 function render(coordinates) {
   var numSamples = process.argv[2] ? process.argv[2] : coordinates[0].samples.length;
   var numSegments = process.argv[3] ? process.argv[3] : coordinates[0].samples[0].segments.length;
@@ -30,7 +29,7 @@ function render(coordinates) {
   var body = d3.select(jsdom().documentElement).select("body");
 
   var width = 1800,
-      height = 600;
+      height = 470;
 
   var svg = body.append("svg")
       .attr("version", "1.1")
@@ -44,19 +43,23 @@ function render(coordinates) {
   var sampleStrokes = svg.append("g");
   var mainStrokes = svg.append("g");
 
-  var xScale = d3.scaleLinear()
-      .domain([-10, 30])
-      .range([0, 1000]);
 
-  var yScale = d3.scaleLinear()
-      .domain([-10, 10])
-      .range([0, 500]);
 
   var continuousColor = d3.scaleSequential(d3ScaleChromatic.interpolatePiYG).domain([-2, 2]);
   var continuousColor = d3.scaleSequential(d3ScaleChromatic.interpolateBrBG).domain([-2, 2]);
   var thresholdColor = function(d) { return d > 0 ? continuousColor(-0.8) : continuousColor(0.8); }
 
-  coordinates.forEach(function(c) {
+  var minY = d3.min(coordinates, function(c) { return c.y; });
+
+  var xScale = d3.scaleLinear()
+      .domain([-10, 30])
+      .range([0, 1000]);
+
+  var yScale = d3.scaleLinear()
+      .domain([minY, 20 + minY])
+      .range([70, 570]);
+
+  coordinates.forEach(function(c, i) {
 
     var line = mainStrokes.append("line")
         .style("stroke", "black")
@@ -77,8 +80,9 @@ function render(coordinates) {
       var sample = c.samples[si];
       d3.range(numSegments).forEach(function(segi) {
         var segment = sample.segments[segi];
-        var a2 = Math.atan2(segment.dy, segment.dx);
-        var a1 = Math.atan2(c.dy, c.dx)
+        var a2 = Math.atan2(c.y - segment.y - segment.dy, c.x - segment.x - segment.dx);
+        var forwardC = coordinates[Math.min(coordinates.length - 1, i + segi)];
+        var a1 = Math.atan2(c.y - forwardC.y - forwardC.dy, c.x - forwardC.x - forwardC.dx);
         var sign = a1 > a2 ? 1 : -1;
         var angle = a1 - a2;
         var K = -sign * Math.PI * 2;

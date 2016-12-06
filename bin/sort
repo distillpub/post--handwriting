@@ -86,12 +86,21 @@ function extract(samples) {
     }
   }
 
+  var flipCell = []
   bycell.forEach(function(cell,i) {
     //var negative = cell.reduce(function(sum, d) { return d < 0 ? sum + 1 : sum }, 0)
     //if(negative > 50) bycell[i] = cell.map(function(d) { return d * -1 })
     //if(negative > 100) cell = cell.map(function(d) { return d * -1 })
     var sum = d3.sum(cell)
-    if(sum < 0) cell = cell.map(function(d) { return d * -1 })
+
+    var sum = d3.sum(cell)
+    if(sum < 0) {
+      cell = cell.map(function(d) { return d * -1 })
+      flipCell[i] = -1
+    } else {
+      flipCell[i] = 1
+    }
+
     var blurred = []
 
 
@@ -128,6 +137,10 @@ function extract(samples) {
       .range([0,1])
     bycell[i] = cell.map(function(d) { return cscale(d)})*/
   })
+  console.log("flip cell\n")
+  process.stdout.write(JSON.stringify(flipCell))
+  console.log("\n")
+
 
   // TSNE calculations on all 500 cells
   //console.log("TSNE")
@@ -152,7 +165,7 @@ function extract(samples) {
     return out[b] - out[a]
   })
 
-  //console.log("indexes", indexes)
+  console.log("indexes\n")
   process.stdout.write(JSON.stringify(indexes))
 
 }

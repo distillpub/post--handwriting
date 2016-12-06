@@ -75,8 +75,10 @@ Polymer({
     picker.picked = loadSample;
 
     var sortOrder = [];
+    var flipCell = [];
     picker.metadataLoaded = function(meta) {
       sortOrder = meta.sortOrder;
+      flipCell = meta.flipCell
     }
 
     var defaults = this.getAttribute("defaults").split(",")
@@ -97,9 +99,10 @@ Polymer({
         var bycell = d3.range(500).map(function() { return [] })
         for(var i = 0; i < steps.length; i++) {
           for(var j = 0; j < bycell.length; j++) {
-            bycell[j][i] = steps[i][j]
+            bycell[j][i] = steps[i][j] * flipCell[j];
           }
         }
+        /*
         bycell.forEach(function(cell,i) {
           //var negative = cell.reduce(function(sum, d) { return d < 0 ? sum + 1 : sum }, 0)
           //if(negative > 50) bycell[i] = cell.map(function(d) { return d * -1 })
@@ -108,6 +111,7 @@ Polymer({
           if(sum < 0) cell = cell.map(function(d) { return d * -1 })
           bycell[i] = cell;
         });
+        */
 
         var cellsOverlay = root.select("cells-overlay").node()
         var cellsCanvas = root.select("cells-canvas").node()

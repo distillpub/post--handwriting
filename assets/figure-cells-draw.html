@@ -71,7 +71,7 @@ Polymer({
     var canvas = d3.select(this.cellsCanvas).select("canvas").node()
     var ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    this.updateByCell([])
+    this.updateByCell(d3.range(500).map(function(d) { return [] }))
     this.update(0)
   },
   ready: function() {
@@ -79,30 +79,32 @@ Polymer({
     var root = d3.select(that);
     this.mode = this.getAttribute("mode");
 
-    d3.json("assets/metadata.json", function(error, meta) {
+    d3.queue()
+      .defer(d3.json, 'assets/metadata.json')
+      .defer(d3.json, 'assets/validation/data/writesomething.json?q=2')
+    .await(function(error, meta, writesomething) {
+    //d3.json("assets/metadata.json", function(error, meta) {
       var sortOrder = meta.sortOrder;
+      var flipCell = meta.flipCell
 
       var steps = [];
-      var bycell = [];
       var stepLimit = 370;
       var nCells = 500;
+      var bycell = d3.range(nCells).map(function() { return [] })
+
+
+      function updateByCellSingle(step, si) {
+        for(var i = 0; i < nCells; i++) {
+          bycell[i][si] = steps[si][i] * flipCell[i];
+        }
+      }
 
       function updateByCell(steps) {
-        // TODO: try not to have to do this on every step
-        bycell = d3.range(500).map(function() { return [] })
         for(var i = 0; i < steps.length; i++) {
-          for(var j = 0; j < bycell.length; j++) {
-            bycell[j][i] = steps[i][j]
+          for(var j = 0; j < nCells; j++) {
+            bycell[j][i] = steps[i][j] * flipCell[j]
           }
         }
-        bycell.forEach(function(cell,i) {
-          //var negative = cell.reduce(function(sum, d) { return d < 0 ? sum + 1 : sum }, 0)
-          //if(negative > 50) bycell[i] = cell.map(function(d) { return d * -1 })
-          //if(negative > 100) cell = cell.map(function(d) { return d * -1 })
-          var sum = d3.sum(cell)
-          if(sum < 0) cell = cell.map(function(d) { return d * -1 })
-          bycell[i] = cell;
-        });
       }
       that.updateByCell = updateByCell;
 
@@ -146,21 +148,18 @@ Polymer({
 
       cellsDraw.update = function(newSteps, si) {
         steps = newSteps;
-        updateByCell(steps);
+        updateByCellSingle(steps[si], si);
         //var s = newSteps.length - 1
-        var s = si;
         //console.log("new steps", s, steps)
-        var step = bycell.map(function(cell) { return cell[s]})
-        cellsCanvas.renderStep(step, s);
-        cellsCanvas.stepLimit = d3.max([steps.length, s+1]);
-        if(s === 0)
+        var step = bycell.map(function(cell) { return cell[si]})
+        cellsCanvas.renderStep(step, si);
+        cellsCanvas.stepLimit = d3.max([steps.length, si+1]);
+        if(si === 0)
           cellsCanvas.renderCells(bycell);
-        update(s, -1);
+        update(si, -1);
       }
 
-      // render the cell visualization
-      //cellsCanvas.renderCells(bycell);
-      // render the handwriting
+      cellsDraw.renderPlaceholder(writesomething)
 
       update();
     })
