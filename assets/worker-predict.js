@@ -17,9 +17,8 @@ onmessage = function(m) {
   if (typeof +m.data.temperature === "number") temperature = +m.data.temperature;
   if (m.data.update) update(m.data.update[0], m.data.update[1],m.data.update[2]);
   if (m.data.predict) {
-    var steps = m.data.predict > 0 ? m.data.predict : 3;
-    var output = predict(modelX, modelS, steps);
-    postMessage(output)
+    var output = predict(modelX, modelS, m.data.predict);
+    postMessage(output);
   }
 }
 

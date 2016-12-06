@@ -49,7 +49,7 @@
     <svg>
       <g class="user">
         <g class="prompt">
-          <text dx="-5" dy="-12">Start writing here</text>
+          <text dx="-5" dy="-12">Write something here and the network will predict your next strokes</text>
           <circle r="5"></circle>
         </g>
         <line></line>
@@ -81,10 +81,13 @@ Polymer({
     this.temperature = +this.getAttribute("temperature");
     this.userCoordinates = [];
 
+    this.pending = false;
+
     this.worker = new Worker("assets/worker-predict.js");
     this.worker.onmessage = function(event) {
       that.renderCoordinates.call(that, that.userCoordinates, that.context);
       that.renderPrediction.call(that, event.data[0], event.data[1], event.data[2]);
+      that.pending = false;
       if (that.playing) that.play();
     }
 
@@ -94,10 +97,13 @@ Polymer({
   },
   play: function() {
     this.playing = true;
-    this.worker.postMessage({
-      predict: this.predictionLength,
-      temperature: this.temperature
-    });
+    if (!this.pending) {
+      this.pending = true;
+      this.worker.postMessage({
+        predict: this.predictionLength,
+        temperature: this.temperature
+      });
+    }
   },
   pause: function() {
     this.playing = false;
@@ -134,7 +140,7 @@ Polymer({
     this.worker.postMessage({
       reset: true,
     });
-    this.play();
+    // this.play();
   },
   ready: function() {
     var that = this;
@@ -189,7 +195,7 @@ Polymer({
         that.tempy = d3.event.y;
         that.tempdx = 0;
         that.tempdy = 0;
-        console.log("coords", that.userCoordinates)
+        // console.log("coords", that.userCoordinates)
       }
     }
 
