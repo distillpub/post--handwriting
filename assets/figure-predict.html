@@ -221,11 +221,13 @@ Polymer({
 
     var promptEnter = prompt.enter().append("g").attr("class", "prompt");
 
+    var padding = this.width > 800 ? 100 : 75;
+
     this.svg.select(".user line")
-        .attr("x1", 100)
-        .attr("x2", this.width - 100)
-        .attr("y1", this.origin[1] + 100)
-        .attr("y2", this.origin[1] + 100);
+        .attr("x1", padding)
+        .attr("x2", this.width - padding)
+        .attr("y1", this.origin[1] + padding)
+        .attr("y2", this.origin[1] + padding);
 
     this.svg.select(".prompt")
         .attr("transform", "translate(" + this.origin[0] + "," + this.origin[1] + ")");
