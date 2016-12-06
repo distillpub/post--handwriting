@@ -24,7 +24,7 @@
     fill: none;
     stroke-width: 3px;
     stroke: #ccc;
-    pointer-events: all;
+    pointer-events: none;
   }
   cells-draw .segment.penup {
     stroke-dasharray: 2 1;
@@ -216,7 +216,7 @@ Polymer({
       if(that.steps.length >= stepLimit) {
         return;
       }
-      segmentGroup.style("pointer-events", "none")
+      //segmentGroup.style("pointer-events", "none")
 
       // create a new coordinate
       var x, y;
@@ -261,7 +261,7 @@ Polymer({
     }
     function drawEnd() {
       var coordinates = that.coordinates;
-      segmentGroup.style("pointer-events", "all")
+      //segmentGroup.style("pointer-events", "all")
       // set pen state to up for last coordinate
       coordinates[coordinates.length - 1][2] = 1;
     }
@@ -269,7 +269,7 @@ Polymer({
     root.select("svg.svg").call(drag)
 
 
-    function renderStep(coordinate) {
+    function renderStep(coordinate, si) {
       var s = that.coordinates.length;
       var c0 = that.coordinates[s - 1]
       var c1 = coordinate;
@@ -298,10 +298,12 @@ Polymer({
         })
     }
     function colorSegments(stepIndex, cellIndex, bycell) {
-      if(that.coordinates.length && that.coordinates[stepIndex]) {
+      if(stepIndex > that.coordinates.length) stepIndex = that.coordinates.length;
+      //console.log("stepIndex", stepIndex, that.coordinates.length, that.coordinates[stepIndex-1])
+      if(that.coordinates.length && that.coordinates[stepIndex-1]) {
         target
-          .style("left", that.coordinates[stepIndex].x + "px")
-          .style("top", that.coordinates[stepIndex].y + (height / 2) + margin.top + "px");
+          .style("left", that.coordinates[stepIndex-1].x + "px")
+          .style("top", that.coordinates[stepIndex-1].y + (height / 2) + margin.top + "px");
       }
       var lines = segmentGroup.selectAll("line.segment")
 
