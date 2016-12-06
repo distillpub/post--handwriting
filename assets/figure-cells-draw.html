@@ -71,7 +71,7 @@ Polymer({
     var canvas = d3.select(this.cellsCanvas).select("canvas").node()
     var ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    this.updateByCell([])
+    this.updateByCell(d3.range(500).map(function(d) { return [] }))
     this.update(0)
   },
   ready: function() {
