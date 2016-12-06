@@ -73,7 +73,11 @@
 
       // render the horizontal crosshair box for the column
       if(i >= 0) {
-        this.cellTooltip.render(x - 8, y, "Cell " + i, "left");
+        if (x > 400) {
+          this.cellTooltip.render(x - 8, y, "Cell " + i, "left");
+        } else {
+          this.cellTooltip.render(x - 8, y, "Cell " + i, "right");
+        }
         this.svg.select(".horizontal")
           .attr("x1", x)
           .attr("y1", 0)
