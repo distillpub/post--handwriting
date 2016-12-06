@@ -116,10 +116,9 @@
 
   <div style="position: relative;">
     <div style="position: absolute; width: 100%;">
-      <div class="controls w-page" id="figure-predict-controls" style="text-align: center;z-index: 10;position: relative;">
+      <div class="controls w-page" id="figure-predict-controls" style="text-align: center;z-index: 10;position: relative;margin-top: 18px;">
         <button onclick="document.querySelector('figure-predict').playToggle()">Play/Pause</button>
         <button onclick="document.querySelector('figure-predict').clear()">Clear</button>
-
 
         <span style="margin-left: 18px;">Length of prediction</span>
         <input type="range" value="20" min="5" max="200" step="5" oninput="document.querySelector('figure-predict').setPredictionLength(this.value); document.querySelector('#figure-predict-controls .prediction-length').textContent = this.value;" style="width: 70px;"/>
