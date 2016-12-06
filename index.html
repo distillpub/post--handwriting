@@ -47,7 +47,7 @@
   }
   @media(min-width: 1024px) {
     .intro h1 {
-      max-width: 720px;
+      max-width: 780px;
       margin-left: auto;
       margin-right: auto;
       text-align: center;
@@ -108,10 +108,17 @@
 
 </style>
 
+<script>
+d3.select("html head").append("meta")
+    .attr("name", "viewport")
+    .attr("content", "width=768");
+// <meta name="viewport" content="width=device-width, initial-scale=1">
+</script>
+
 <div class="post">
   <div class="intro w-page">
-    <h1>Experiments in Handwriting with a Neural Network</h1>
-    <h2>Some are fun, like the one below that tries to predict your strokes as you write. Some are more serious and attempt to divine meaning from the model.</h2>
+    <h1>Four Experiments in Handwriting with a Neural Network</h1>
+    <h2>We’ll start with a fun one that tries to predict your strokes as you write</h2>
   </div>
 
   <div style="position: relative;">
