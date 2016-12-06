@@ -79,14 +79,18 @@ Polymer({
     var root = d3.select(that);
     this.mode = this.getAttribute("mode");
 
-    d3.json("assets/metadata.json", function(error, meta) {
+    d3.queue()
+      .defer(d3.json, 'assets/metadata.json')
+      .defer(d3.json, 'assets/validation/data/writesomething.json?q=2')
+    .await(function(error, meta, writesomething) {
+    //d3.json("assets/metadata.json", function(error, meta) {
       var sortOrder = meta.sortOrder;
       var flipCell = meta.flipCell
 
       var steps = [];
-      var bycell = [];
       var stepLimit = 370;
       var nCells = 500;
+      var bycell = d3.range(nCells).map(function() { return [] })
 
 
       function updateByCellSingle(step, si) {
@@ -96,23 +100,11 @@ Polymer({
       }
 
       function updateByCell(steps) {
-        // TODO: try not to have to do this on every step
-        bycell = d3.range(nCells).map(function() { return [] })
         for(var i = 0; i < steps.length; i++) {
           for(var j = 0; j < nCells; j++) {
             bycell[j][i] = steps[i][j] * flipCell[j]
           }
         }
-        /*
-        bycell.forEach(function(cell,i) {
-          //var negative = cell.reduce(function(sum, d) { return d < 0 ? sum + 1 : sum }, 0)
-          //if(negative > 50) bycell[i] = cell.map(function(d) { return d * -1 })
-          //if(negative > 100) cell = cell.map(function(d) { return d * -1 })
-          var sum = d3.sum(cell)
-          if(sum < 0) cell = cell.map(function(d) { return d * -1 })
-          bycell[i] = cell;
-        });
-        */
       }
       that.updateByCell = updateByCell;
 
@@ -156,11 +148,7 @@ Polymer({
 
       cellsDraw.update = function(newSteps, si) {
         steps = newSteps;
-        if(si === 0) {
-          updateByCell(steps);
-        } else {
-          updateByCellSingle(steps[si], si);
-        }
+        updateByCellSingle(steps[si], si);
         //var s = newSteps.length - 1
         //console.log("new steps", s, steps)
         var step = bycell.map(function(cell) { return cell[si]})
@@ -171,9 +159,7 @@ Polymer({
         update(si, -1);
       }
 
-      // render the cell visualization
-      //cellsCanvas.renderCells(bycell);
-      // render the handwriting
+      cellsDraw.renderPlaceholder(writesomething)
 
       update();
     })

@@ -14,7 +14,10 @@
   cells-draw > .svg {
     width: 100%;
     height: 200px;
-    border: 1px dashed #eee;
+    cursor: pointer;
+  }
+  cells-draw .full {
+    cursor: default;
   }
   cells-draw .segment-group {
     stroke-linecap: round;
@@ -23,10 +26,27 @@
     stroke: #ccc;
     pointer-events: all;
   }
-  cells-draw .penup {
+  cells-draw .segment.penup {
     stroke-dasharray: 2 1;
     stroke-width: 2px;
     stroke-linecap: butt;
+  }
+  cells-draw .placeholder-segment.penup {
+    stroke: none;
+  }
+
+  cells-draw .baseline {
+    stroke-width: 2px;
+    stroke: #ddd;
+    stroke-dasharray: 4 4;
+  }
+
+  cells-draw .placeholder-group {
+    stroke-linecap: round;
+    fill: none;
+    stroke-width: 2px;
+    stroke: #ddd;
+    pointer-events: none;
   }
 </style>
 
@@ -59,10 +79,16 @@ Polymer({
     this.steps = [];
     this.coordinates = [];
     this.currentStep = 0;
-    d3.select(this).select("svg.svg").selectAll("line.segment").remove()
+    var svg =  d3.select(this).select("svg.svg")
     var target = d3.select(this).select(".target")
-      .style("left", "0px")
+      .style("left", "-1000px")
       .style("top", "0px")
+
+    svg.selectAll("line.segment").remove()
+    svg.classed("full", false)
+    svg.select(".placeholder-group").style("opacity", 1)
+    svg.select(".baseline").style("opacity", 1)
+
   },
   ready: function() {
     var root = d3.select(this);
@@ -72,6 +98,7 @@ Polymer({
 
     this.renderStep = renderStep; // function(coordinate)
     this.colorSegments = colorSegments; // function(stepIndex, cellIndex, steps)
+    this.renderPlaceholder = renderPlaceholder // function(coordinates)
 
     if(typeof that.select !== "function")
       that.select = function(stepIndex, cellIndex) {};
@@ -99,6 +126,9 @@ Polymer({
         width = bbox.width - margin.left - margin.right,
         height = bbox.height - margin.top - margin.bottom;
 
+    var HARDCODED_WIDTH = 980
+    var HARDCODED_HEIGHT = 200
+
     var xScale = d3.scaleLinear()
         .range([-width / 2, width / 2]);
 
@@ -118,24 +148,60 @@ Polymer({
     var tooltip = root.select(".tooltip").node();
     var target = root.select(".target");
 
+    target
+      .style("left", "-1000px")
+      .style("top", "0px");
+
     var segmentGroup = stage.append("g").attr("class", "segment-group");
+
+    var placeholderGroup = stage.append("g").attr("class", "placeholder-group");
+
+    var baseline = stage.append("line")
+      .classed("baseline", true)
+      .attr("x1", 0)
+      .attr("x2", 1000)
+      .attr("y1", 125)
+      .attr("y2", 125)
 
     xScale.domain([-(width / 2) / zoom, (width / 2) / zoom]);
     yScale.domain([-(height / 2) / zoom, (height / 2) / zoom]);
     stage.attr("transform", "translate(" + 0 + "," + (height / 2) + ")");
 
-/*
-    svg.append("circle").attr("r", 10).attr("x", xScale(0)).attr("y", yScale(0))
-    svg.append("circle").attr("r", 9).attr("x", xScale(150)).attr("y", yScale(150))
-    svg.append("circle").attr("r", 8).attr("x", xScale.invert(50)).attr("y", yScale.invert(50)).style("fill", "red")
-    svg.append("circle").attr("r", 5).attr("x", xScale.invert(0)).attr("y", yScale.invert(0)).style("fill", "blue")
-    */
+    // renders the "write something" text. only meant to be run once.
+    function renderPlaceholder(coordinates) {
+      placeholderGroup.selectAll("*").remove();
+      // render individual line segments
+      var x = xScale(coordinates[0][0]) + 100;
+      var y = yScale(coordinates[0][1]) + 100;
+      var pen = 0;
+
+      coordinates.forEach(function(c,i) {
+        var x1 = x;
+        var y1 = y;
+        x += xScale(c[0])
+        y += yScale(c[1])
+        c.x = x;
+        c.y = y;
+        var p0 = [x1,y1,pen]
+        var p1 = [x,y,c[2]]
+
+        var segment = placeholderGroup.append("line").classed("placeholder-segment", true)
+        segment.attr("x1", p0[0])
+        segment.attr("y1", p0[1])
+        segment.attr("x2", p1[0])
+        segment.attr("y2", p1[1])
+        if (p0[2] !== 0) {
+          segment.classed("penup", true)
+        }
+        pen = c[2];
+      })
+    }
+
 
     that.currentStep = 0;
     function updateModel(c) {
       that.worker.postMessage({update: c, stepIndex: that.currentStep});
     }
-
 
     var drag = d3.drag()
       .on("start", drawStart) // after a new pointer becomes active (on mousedown or touchstart)
@@ -143,9 +209,14 @@ Polymer({
       .on("end", drawEnd);
 
     function drawStart() {
+      placeholderGroup
+        .transition()
+        .style("opacity", 0)
       var coordinates = that.coordinates;
-      if(that.steps.length >= stepLimit) return;
-      root.select("svg.svg").selectAll("line.segment").style("pointer-events", "none")
+      if(that.steps.length >= stepLimit) {
+        return;
+      }
+      segmentGroup.style("pointer-events", "none")
 
       // create a new coordinate
       var x, y;
@@ -171,7 +242,11 @@ Polymer({
     }
     function draw() {
       var coordinates = that.coordinates;
-      if(that.steps.length >= stepLimit) return;
+      if(that.steps.length >= stepLimit) {
+        root.select("svg.svg").classed("full", true)
+        baseline.transition().style("opacity", 0)
+        return;
+      }
 
       var x = coordinates[coordinates.length - 1].x
       var y = coordinates[coordinates.length - 1].y
@@ -186,7 +261,7 @@ Polymer({
     }
     function drawEnd() {
       var coordinates = that.coordinates;
-      root.select("svg.svg").selectAll("line.segment").style("pointer-events", "all")
+      segmentGroup.style("pointer-events", "all")
       // set pen state to up for last coordinate
       coordinates[coordinates.length - 1][2] = 1;
     }
@@ -203,6 +278,8 @@ Polymer({
       that.coordinates.push(c1)
       renderSegment([c0.x, c0.y, c0[2]], [c1.x, c1.y, c1[2]], s)
     }
+
+
 
     function renderSegment(p0, p1, s) {
       var segment = segmentGroup.append("line").classed("segment", true)
@@ -226,7 +303,7 @@ Polymer({
           .style("left", that.coordinates[stepIndex].x + "px")
           .style("top", that.coordinates[stepIndex].y + (height / 2) + margin.top + "px");
       }
-      var lines = svg.selectAll("line.segment")
+      var lines = segmentGroup.selectAll("line.segment")
 
       lines
         .style("stroke", function(d) {

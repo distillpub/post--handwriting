@@ -190,6 +190,7 @@ Polymer({
         that.tempy = d3.event.y;
         that.tempdx = 0;
         that.tempdy = 0;
+        console.log("coords", that.userCoordinates)
       }
     }
 
@@ -209,7 +210,6 @@ Polymer({
       that.x = d3.event.x;
       that.y = d3.event.y;
     }
-
   },
   clearCanvas: function() {
     this.context.clearRect(0, 0, this.width, this.height);
