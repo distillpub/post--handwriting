@@ -1,6 +1,6 @@
 {
-  "main": "index.md",
-  "name": "augmented-rnns",
+  "main": "index.html",
+  "name": "handwriting",
   "distill": {
     "title": "Experiments in Handwriting with a Neural Network",
     "description": "Several interactive visualizations of a generative model of handwriting. Some are fun, some are serious.",
