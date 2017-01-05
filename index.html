@@ -166,7 +166,7 @@ d3.select("html head").append("meta")
   </div>
   <figure-gaussian class="w-page"></figure-gaussian> -->
 
-  <p>Most of the marks are gibberish, but many of them are surprisingly convincing. Some real (or real-ish) words even start to appear. One surprising thing you’ll notice is that the general style of handwriting is more or less consistent within a sample. This is because the type of architecture used for this model (LSTM) has a mechanism for remembering previous strokes. It is therefore able to remember things like how loopy or jerky, or which letter preceeded the current one. (For more on LSTMs and how they can remember, Chris Olah has a <a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">good primer</a>.)</p>
+  <p>Most of the marks are gibberish, but many of them are surprisingly convincing. Some real (or real-ish) words even start to appear. One surprising thing you’ll notice is that the general style of handwriting is more or less consistent within a sample. This is because the type of architecture used for this model (LSTM) has a mechanism for remembering previous strokes. It is therefore able to remember things like how loopy or jerky the handwriting is, or which letter preceeded the current one. (For more on LSTMs and how they can remember, Chris Olah has a <a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">good primer</a>.)</p>
 
   <p>Even with this memory, the technique for generating samples from neural networks is probabilistic, meaning each of these samples is one of a much, much larger possibility space. Viewing them one at a time feels unsatisfying — how can we infer much from one or two samples when there are nearly infinite possibilities? If something looks wrong, how do we know if it was because there is something fundamentally wrong with our model or if it was just dumb luck?</p>
 
@@ -197,7 +197,7 @@ d3.select("html head").append("meta")
     </div>
   </figure-hairs>
 
-  <p>With this technique we are casting a light into a wider possibility space. You can see some areas where there was general consensus as to what to do next. Other areas had more of a “anything can happen next” feeling. Others seem to show a possible fork in the road. “We can be drawing an “a” or “g”. A few steps later it’s clear the model has converged on a cursive “g”.</p>
+  <p>With this technique we are casting a light into a wider possibility space. You can see some areas where there was general consensus as to what to do next. Other areas had more of a “anything can happen next” feeling. Others seem to show a possible fork in the road. We can be drawing an “a” or “g”. A few steps later it’s clear the model has converged on a cursive “g”.</p>
 
 
   <figure class="p-right-margin" style="width: 145px;">
@@ -246,7 +246,7 @@ d3.select("html head").append("meta")
 
   <p>Is there a way to order the cells to make this structure clearer? We've found that applying one-dimensional <a href="https://lvdmaaten.github.io/tsne/">t-SNE</a> to the activations of the cells over time can organize them, bringing cells with similar behavior close together. This makes the diagram easier to read. We use a few small tricks to achieve the best results.<sup><a href="#footnote3">3</a></sup></p>
 
-  <figure-cells class="w-page" mode="sorted" defaults="71,0"></figure-cells>
+  <figure-cells class="w-page" mode="sorted" defaults="55,0"></figure-cells>
 
   <p>In this version we can find a few clear behaviors. For example, cells <a onclick="cellClick(11)">11</a>-<a onclick="cellClick(70)">70</a> at the top seem sensitive to slightly different directions and curvatures of the pen path -- see in particular cells <a onclick="cellClick(25)">25</a> and <a onclick="cellClick(55)">55</a>. On the other hand, at the bottom, cells below <a onclick="cellClick(427)">427</a> seem focused on pen lifts; for example, cell <a onclick="cellClick(494)">494</a> seems to predict whether the pen is about to be lifted. In the middle, we see a variety of cells, including some tracking absolute position. Cell <a onclick="cellClick(136)">136</a> and its neighbors seem concerned with horizontal position, while cells around <a onclick="cellClick(236)">236</a> seem concerned with vertical position. Cell <a onclick="cellClick(242)">242</a> appears to track position within a word. </p>
 
@@ -260,13 +260,13 @@ d3.select("html head").append("meta")
   <div class="controls w-page" id="figure-cells-draw-controls" style="margin-top: 36px;">
     <button onclick="document.querySelector('figure-cells-draw').clear()">Clear</button>
   </div>
-  <figure-cells-draw class="w-page" mode="sorted" defaults="71,0"></figure-cells-draw>
+  <figure-cells-draw class="w-page" mode="sorted" defaults="55,0"></figure-cells-draw>
 
   <hr>
 
   <h3>Conclusion</h3>
 
-  <p>The black box reputation of machine learning models is well deserved, but we believe part of that reputation has been born from the programming context into which they have been locked into. The experience of having an easily inspectable model available in the same programming context as the interactive visualization environment (here, javascript) proved to be very productive for prototyping and exploring new ideas for this post.</p>
+  <p>The black box reputation of machine learning models is well deserved, but we believe part of that reputation has been born from the programming context into which they have been locked. The experience of having an easily inspectable model available in the same programming context as the interactive visualization environment (here, javascript) proved to be very productive for prototyping and exploring new ideas for this post.</p>
 
   <p>As we are able to move them more and more into the same programming context that user interface work is done, we believe we will see richer modes of human-ai interactions flourish. This could have a marked impact on debugging and building models, for sure, but also in how the models are used. Machine learning research typically seeks to mimic and substitute humans, and increasingly it’s able to. What seems less explored is using machine learning to augment humans. This sort of complicated human-machine interaction is best explored when the full capabilities of the model are available in the user interface context.</p>
 

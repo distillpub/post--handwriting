@@ -1,39 +1,39 @@
 {
-  "main": "index.md",
-  "name": "augmented-rnns",
+  "main": "index.html",
+  "name": "handwriting",
   "distill": {
     "title": "Experiments in Handwriting with a Neural Network",
     "description": "Several interactive visualizations of a generative model of handwriting. Some are fun, some are serious.",
-    "url": "",
-    "github": "",
-    "firstPublished": "Tue Oct 18 2016 21:39:33 GMT-0700 (PDT)",
-    "lastPublished": "Tue Oct 18 2016 21:39:33 GMT-0700 (PDT)",
+    "url": "http://distill.pub/2016/handwriting/",
+    "github": "https://github.com/distillpub/post--handwriting",
+    "firstPublished": "Tue Dec 6 2016 21:39:33 GMT-0700 (PDT)",
+    "lastPublished": "Tue Dec 6 2016 21:39:33 GMT-0700 (PDT)",
     "authors": [
       {
         "firstName": "Shan",
         "lastName": "Carter",
-        "personalURL": "",
+        "personalURL": "http://shancarter.com",
         "affiliation": "Google Brain",
         "affiliationURL": "http://g.co/brain"
       },
       {
         "firstName": "David",
         "lastName": "Ha",
-        "personalURL": "",
+        "personalURL": "https://github.com/hardmaru",
         "affiliation": "Google Brain",
         "affiliationURL": "http://g.co/brain"
       },
       {
         "firstName": "Ian",
         "lastName": "Johnson",
-        "personalURL": "",
+        "personalURL": "https://github.com/enjalot",
         "affiliation": "Google Cloud",
         "affiliationURL": ""
       },
       {
         "firstName": "Chris",
         "lastName": "Olah",
-        "personalURL": "",
+        "personalURL": "http://colah.github.io/",
         "affiliation": "Google Brain",
         "affiliationURL": "http://g.co/brain"
       }
