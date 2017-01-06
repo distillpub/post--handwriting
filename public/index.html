@@ -1,3 +1,7 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="http://distill.pub/components.js"></script>
+<dt-header></dt-header>
 <script src="assets/webcomponents-lite.min.js"></script>
 <link rel="import" href="assets/polymer-mini.html">
 
@@ -115,10 +119,10 @@ d3.select("html head").append("meta")
 // <meta name="viewport" content="width=device-width, initial-scale=1">
 </script>
 
-<div class="post">
+<dt-post>
   <div class="intro w-page">
     <h1>Four Experiments in Handwriting with a Neural Network</h1>
-    <h2>We’ll start with a fun one that tries to predict your strokes as you write</h2>
+    <h2>Let’s start with generating new strokes based on your handwriting input</h2>
   </div>
 
   <div style="position: relative;">
@@ -140,11 +144,13 @@ d3.select("html head").append("meta")
     <figure-predict class="w-screen" temperature="0.1" predictionlength="20"></figure-predict>
   </div>
 
-  {{> byline.html}}
+  <dt-byline></dt-byline>
 
   <p> Neural networks are an extremely successful approach to machine learning, but it’s tricky to understand why they behave the way they do. This has sparked a lot of interest and effort around trying to understand and visualize them, which we think is so far just scratching the surface of what is possible.</p>
 
-  <p>In this article we will try to push forward in this direction by taking a generative model of handwriting<sup><a href="#footnote2">2</a></sup> and visualizing it in a number of ways. In the end we don’t have some ultimate answer or visualization, but we do have some interesting ideas to share. Ultimately we hope they make it easier to divine some meaning from the internals of these model.</p>
+  <p>In this article we will try to push forward in this direction by taking a generative model of handwriting<sup><a href="#footnote2">2</a></sup> and visualizing it in a number of ways.  The model is quite simple (so as to run well in the browser) so the generated output mostly produces gibberish letters and words (albeit, gibberish that look like real handwriting), but it is still useful for our purposes of exploring visualization techniques.</p>
+
+  <p>In the end we don’t have some ultimate answer or visualization, but we do have some interesting ideas to share. Ultimately we hope they make it easier to divine some meaning from the internals of these model.</p>
 
   <h3>Looking at the Output of the Model</h3>
 
@@ -270,9 +276,9 @@ d3.select("html head").append("meta")
 
   <p>As we are able to move them more and more into the same programming context that user interface work is done, we believe we will see richer modes of human-ai interactions flourish. This could have a marked impact on debugging and building models, for sure, but also in how the models are used. Machine learning research typically seeks to mimic and substitute humans, and increasingly it’s able to. What seems less explored is using machine learning to augment humans. This sort of complicated human-machine interaction is best explored when the full capabilities of the model are available in the user interface context.</p>
 
-</div>
+</dt-post>
 
-<section class="appendix">
+<dt-appendix>
 
   <h3>Footnotes</h3>
 
@@ -281,7 +287,6 @@ d3.select("html head").append("meta")
   <p><a id="footnote2">2.</a> The model used in this articles is a version of the model described in Section 4.2 of <a href="https://arxiv.org/abs/1308.0850">Generating Sequences With Recurrent Neural Network</a> by Alex Graves. It is a small LSTM, with 500 hidden units, trained to perform the unconditional handwriting generation task.  For a detailed description of the model and training procedure, please refer to <a href="http://blog.otoro.net/2015/12/12/handwriting-generation-demo-in-tensorflow/">this blog</a> post in addition to the Graves paper.  After training the LSTM, we quantized the weights using 8-bit integers, and exported the weights into a small <a href="https://jb64.org/specification/">JSON-Base64</a> formatted file.</p>
 
   <p><a id="footnote3">3.</a> We use two different tricks to make the t-SNE organization of neurons work better. First, if a cell state is mostly negative, we canonicalize it by flipping its sign. (From the LSTM's perspective, this is completely equivelant, provided we flip the sign of some weights. The sign of a cell state is arbitrary.) Secondly, we tried using different metrics on points in our dataset for t-SNE, encouraging it to put points we think of as similar close together. We got good results basing our metric on blurred data (so that cells offset forward or backwards by one are still close together) and a blurred <a href="https://en.wikipedia.org/wiki/Sobolev_space">Sobolev metric</a> to encourage sharp changes to line up. We achieved slightly better results, presented in the article, yet by creating a metric based on percentiles of cell activation in a neighborhood. See `bin/sort` in the repository for details.</p>
-
 
   <h3>Acknowledgments</h3>
 
@@ -293,21 +298,6 @@ d3.select("html head").append("meta")
 
   <p>Shan Carter wrote the article and created the interactive experiments in the first section. David Ha created the handwriting model and ported it to Javascript. Ian Johnson created the final diagrams exploring activations. Chris Olah provided guidance and core ideas for the diagrams and edited the article.</p>
 
-  <h3 id="citation">Errors, Reuse, and Citation</h3>
-  <p>If you see mistakes or want to suggest changes, please submit a pull request on <a href="{{{distill.github}}}">github</a>.
-  <p>Diagrams and text are licensed under Creative Commons Attribution <a href="https://creativecommons.org/licenses/by/2.0/">CC-BY 2.0</a>, unless noted otherwise, with the source available on <a href="{{{distill.github}}}">github</a>.
-  <p>For attribution in academic contexts, please cite this work as
-  <pre class="citation">{{distill.concatenatedAuthors}} "{{distill.title}}", Distill, {{distill.firstPublishedYear}}.</pre>
-  <p>BibTeX citation
-  {{=<% %>=}}
-<pre class="citation">@misc{<%distill.slug%>,
-  author = {<%distill.bibtexAuthors%>},
-  title = {<%distill.title%>},
-  year = {<%distill.firstPublishedYear%>},
-  howpublished = {<%distill.url%>}
-}</pre>
-
-  <%={{ }}=%>
   <h3>References</h3>
   <ul class="references">
     <li><a href="https://arxiv.org/pdf/1308.0850v5.pdf">Graves, A., 2013. <b>Generating sequences with recurrent neural networks.</b> arXiv preprint arXiv:1308.0850.</a></li>
@@ -316,4 +306,7 @@ d3.select("html head").append("meta")
     <li><a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">Olah, C., 2015. <b>Understanding LSTM Networks</b>.</a></li>
   </ul>
 
-</section>
+</dt-appendix>
+
+</dt-post>
+<dt-footer></dt-footer>

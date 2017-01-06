@@ -4,10 +4,6 @@
   "distill": {
     "title": "Experiments in Handwriting with a Neural Network",
     "description": "Several interactive visualizations of a generative model of handwriting. Some are fun, some are serious.",
-    "url": "http://distill.pub/2016/handwriting/",
-    "github": "https://github.com/distillpub/post--handwriting",
-    "firstPublished": "Tue Dec 6 2016 21:39:33 GMT-0700 (PDT)",
-    "lastPublished": "Tue Dec 6 2016 21:39:33 GMT-0700 (PDT)",
     "authors": [
       {
         "firstName": "Shan",
