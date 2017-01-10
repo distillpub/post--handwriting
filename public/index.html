@@ -1,5 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=768, initial-scale=1">
 <script type="text/front-matter">
   title: Experiments in Handwriting with a Neural Network
   description: Several interactive visualizations of a generative model of handwriting. Some are fun, some are serious.
@@ -26,57 +27,17 @@
   }
 </script>
 
-<!--
-<style>
-  .post .paper {
-    background: white;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
-  }
-  .post .row {
-    display: flex;
-  }
-  .post .row .column {
-    flex-grow: 1;
-    width: 100%;
-    margin-right: 18px;
-  }
-  .post .row .column:last-of-type {
-    margin-right: 0;
-  }
-</style> -->
-
 <link rel="import" href="assets/distill-stage-manager.html">
-
-<!-- <link rel="import" href="assets/figure-gaussian.html"> -->
 <link rel="import" href="assets/figure-animated.html">
 <link rel="import" href="assets/figure-predict.html">
 <link rel="import" href="assets/figure-hairs.html">
-<!-- <link rel="import" href="assets/figure-normalize.html"> -->
 <link rel="import" href="assets/figure-cells.html">
 <link rel="import" href="assets/figure-cells-draw.html">
 
 <style>
-  .intro h2 {
-    font-weight: normal;
-    font-size: 16px;
-  }
-  @media(min-width: 1024px) {
-    .intro h1 {
-      max-width: 780px;
-      margin-left: auto;
-      margin-right: auto;
-      text-align: center;
-    }
-    .intro h2 {
-      text-align: center;
-      font-size: 20px;
-      max-width: 740px;
-      margin: 0 auto;
-      font-weight: 300;
-      line-height: 1.5em;
-    }
-  }
+.post h2 {
+  border-bottom: none!important;
+}
   .post .controls {
     border-top: 1px solid rgba(0, 0, 0, 0.1);
     margin-top: 48px;
@@ -104,9 +65,6 @@
     position: relative;
     top: 3px;
   }
-  .post > h2 {
-    margin-top: 60px;
-  }
   .post sup {
     vertical-align: baseline;
     position: relative;
@@ -124,22 +82,13 @@
 
 </style>
 
-<script>
-d3.select("html head").append("meta")
-    .attr("name", "viewport")
-    .attr("content", "width=768");
-// <meta name="viewport" content="width=device-width, initial-scale=1">
-</script>
+<dt-article class="post">
+  <h1 class="l-middle">Four Experiments in Handwriting with a Neural Network</h1>
+  <h2 class="l-page">Let’s start with generating new strokes based on your handwriting input</h2>
 
-<dt-article>
-  <div class="intro l-page">
-    <h1>Four Experiments in Handwriting with a Neural Network</h1>
-    <h2>Let’s start with generating new strokes based on your handwriting input</h2>
-  </div>
-
-  <div style="position: relative;">
+  <div class="l-screen" style="position: relative;">
     <div style="position: absolute; width: 100%;">
-      <div class="controls l-page" id="figure-predict-controls" style="text-align: center;z-index: 10;position: relative;margin-top: 18px;">
+      <div class="controls l-page" id="figure-predict-controls" style="z-index: 10;position: relative;margin-top: 18px;">
         <button onclick="document.querySelector('figure-predict').playToggle()">Play/Pause</button>
         <button onclick="document.querySelector('figure-predict').clear()">Clear</button>
 
@@ -153,7 +102,7 @@ d3.select("html head").append("meta")
 
       </div>
     </div>
-    <figure-predict class="w-screen" temperature="0.1" predictionlength="20"></figure-predict>
+    <figure-predict class="l-screen" temperature="0.1" predictionlength="20"></figure-predict>
   </div>
 
   <dt-byline></dt-byline>
@@ -168,7 +117,7 @@ d3.select("html head").append("meta")
 
   <p>Our first experiment is the most obvious: when we want to see how well someone has learned a task we usually ask them to demonstrate it. So, let’s ask our model to write something for us and see how well it does.</p>
 
-  <div class="controls w-body" id="figure-animated-controls">
+  <div class="controls l-body" id="figure-animated-controls">
     <button class="play" onclick="document.querySelector('figure-animated').togglePlay()">Play/Pause</button>
     <span style="margin-left: 8px;">Variation<sup><a href="#footnote1">1</a></sup></span>
     <input type="range" value="0.6" min="0.1" max="1.5" step="0.05" oninput="document.querySelector('figure-animated').temperature(this.value); document.querySelector('#figure-animated-controls .value').textContent = this.value;" />
@@ -176,26 +125,18 @@ d3.select("html head").append("meta")
   </div>
   <figure-animated class="l-page" temperature="0.6"></figure-animated>
 
-  <!-- <p>To get the model to generate that handwriting, we simply fed in a starting point and then asked it to predict the next position of the pen. We then feed this sample back into the model and repeated the process over and over. After a few hundred iterations we have a sample of what the model thinks is a credible handwriting example.</p> -->
-
-  <!-- <div class="controls w-body">
-    <button class="play" onclick="document.querySelector('figure-gaussian').play()">Play/Pause</button>
-    <button class="restart" onclick="document.querySelector('figure-gaussian').restart()">Restart</button>
-  </div>
-  <figure-gaussian class="l-page"></figure-gaussian> -->
-
-  <p>Most of the marks are gibberish, but many of them are surprisingly convincing. Some real (or real-ish) words even start to appear. One surprising thing you’ll notice is that the general style of handwriting is more or less consistent within a sample. This is because the type of architecture used for this model (LSTM) has a mechanism for remembering previous strokes. It is therefore able to remember things like how loopy or jerky the handwriting is, or which letter preceeded the current one. (For more on LSTMs and how they can remember, Chris Olah has a <a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">good primer</a> <dt-cite article="olah2015understanding"></dt-cite>.)</p>
+  <p>Most of the marks are gibberish, but many of them are surprisingly convincing. Some real (or real-ish) words even start to appear. One surprising thing you’ll notice is that the general style of handwriting is more or less consistent within a sample. This is because the type of architecture used for this model (LSTM) has a mechanism for remembering previous strokes. It is therefore able to remember things like how loopy or jerky the handwriting is, or which letter preceeded the current one. (For more on LSTMs and how they can remember, Chris Olah has a <a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">good primer</a> <dt-cite key="olah2015understanding"></dt-cite>.)</p>
 
   <p>Even with this memory, the technique for generating samples from neural networks is probabilistic, meaning each of these samples is one of a much, much larger possibility space. Viewing them one at a time feels unsatisfying — how can we infer much from one or two samples when there are nearly infinite possibilities? If something looks wrong, how do we know if it was because there is something fundamentally wrong with our model or if it was just dumb luck?</p>
 
-  <figure class="p-right-margin" style="width: 145px;">
+  <figure class="l-gutter" style="width: 145px;">
     <img class="key" src="assets/color-key.svg">
   </figure>
 
   <p>At each iteration our model could have produced many paths. Instead of picking one and throwing the rest away, let’s draw, say, 50 of them. Green strokes below are places where the model would have veered rightward from the chosen stroke, orange is where it would have veered leftward.</p>
 
-  <figure-hairs class="w-screen">
-    <div class="controls w-body">
+  <figure-hairs class="l-screen">
+    <div class="controls l-body">
       <select class="sample">
         <option value="001">Generated sample 1</option>
         <option value="002">Generated sample 2</option>
@@ -217,15 +158,14 @@ d3.select("html head").append("meta")
 
   <p>With this technique we are casting a light into a wider possibility space. You can see some areas where there was general consensus as to what to do next. Other areas had more of a “anything can happen next” feeling. Others seem to show a possible fork in the road. “We can be drawing an “a” or “g”. A few steps later it’s clear the model has converged on a cursive “g”.</p>
 
-
-  <figure class="p-right-margin" style="width: 145px;">
+  <figure class="l-gutter" style="width: 145px;">
     <img class="key" src="assets/color-key.svg">
   </figure>
 
   <p>In addition to visualizing samples generated by the model, this technique can also be applied to human-generated samples. Below we can see what the model would have done at each point if it had taken over for the person.</p>
 
-  <figure-hairs class="w-screen">
-    <div class="controls w-body">
+  <figure-hairs class="l-screen">
+    <div class="controls l-body">
       <select class="sample">
         <option value="0">Validation sample 0</option>
         <option value="1">Validation sample 1</option>
@@ -246,10 +186,6 @@ d3.select("html head").append("meta")
     </div>
   </figure-hairs>
 
-  <!-- <p>[normalized handwriting]</p>
-
-  <figure-normalize class="w-screen"></figure-normalize> -->
-
   <p>It is obvious from these experiments that this model has learned quite a lot about human handwriting. Which sort of raises the question, can we extract that knowledge in any meaningful way, rather than just blindly using it to mimic handwriting?</p>
 
   <h3>Examining the Internals of the Model</h3>
@@ -262,16 +198,11 @@ d3.select("html head").append("meta")
 
   <p>You may have been able to pick out one or two cells with interesting patterns, but we have reason to believe that cells work in tandem, such that an individual cell’s activity may not be as interesting as a group of cells.</p>
 
-  <p>Is there a way to order the cells to make this structure clearer? We've found that applying one-dimensional <a href="https://lvdmaaten.github.io/tsne/">t-SNE</a> <dt-cite article="maaten2008visualizing"></dt-cite> to the activations of the cells over time can organize them, bringing cells with similar behavior close together. This makes the diagram easier to read. We use a few small tricks to achieve the best results.<sup><a href="#footnote3">3</a></sup></p>
+  <p>Is there a way to order the cells to make this structure clearer? We've found that applying one-dimensional <a href="https://lvdmaaten.github.io/tsne/">t-SNE</a> <dt-cite key="maaten2008visualizing"></dt-cite> to the activations of the cells over time can organize them, bringing cells with similar behavior close together. This makes the diagram easier to read. We use a few small tricks to achieve the best results.<sup><a href="#footnote3">3</a></sup></p>
 
   <figure-cells class="l-page" mode="sorted" defaults="55,0"></figure-cells>
 
   <p>In this version we can find a few clear behaviors. For example, cells <a onclick="cellClick(11)">11</a>-<a onclick="cellClick(70)">70</a> at the top seem sensitive to slightly different directions and curvatures of the pen path -- see in particular cells <a onclick="cellClick(25)">25</a> and <a onclick="cellClick(55)">55</a>. On the other hand, at the bottom, cells below <a onclick="cellClick(427)">427</a> seem focused on pen lifts; for example, cell <a onclick="cellClick(494)">494</a> seems to predict whether the pen is about to be lifted. In the middle, we see a variety of cells, including some tracking absolute position. Cell <a onclick="cellClick(136)">136</a> and its neighbors seem concerned with horizontal position, while cells around <a onclick="cellClick(236)">236</a> seem concerned with vertical position. Cell <a onclick="cellClick(242)">242</a> appears to track position within a word. </p>
-
-  <!--<p>In this version we can find a few clear behaviors. For example, cells <a onclick="cellClick(45)">45</a>, <a onclick="cellClick(277)">277</a> and <a onclick="cellClick(286)">286</a> seem be focused on the pen lifting off the page, or transitions between letters. Cells <a onclick="cellClick(253)">253</a>, <a onclick="cellClick(262)">262</a> and <a onclick="cellClick(275)">275</a> seem to activate sharply at the start of a new letter. Cells <a onclick="cellClick(60)">60</a> and <a onclick="cellClick(61)">61</a> appear to ramp up just before the transition between letters. Cell <a onclick="cellClick(117)">117</a> shows a smooth, horizontal gradient, implying that it is remembering the x position of the pen, or perhaps the length of the sample. Some cells seem to track directionality of the strokes, for example cells <a onclick="cellClick(20)">20</a>,<a onclick="cellClick(21)">21</a> and <a onclick="cellClick(22)">22</a> activate strongly on strokes that move up and to the right while cell <a onclick="cellClick(30)">30</a> activates on flat right strokes. Cell <a onclick="cellClick(71)">71</a> oscillates between positive and negative activations corresponding with upwards and downwards directions. Cell <a onclick="cellClick(35)">35</a> looks like it keeps track of whether a stroke is at the top or bottom of the character, perhaps pushing the pen up and down.-->
-
-  <!--<p>In this version we can find a few clear behaviors. For example, cells 112-127 seem be focused on the pen lifting off the page, or transitions between letters. Cells 340-350 seem to also be focused on pen change states, but almost seem to be negative mirror images. Cell 117 shows a smooth, horizontal gradient, implying that it is remembering the x position of the pen, or perhaps the length of the sample.
-  -->
 
   <p>Another way to explore the activations is to give it a sample and interactively see the activations. Below you can write and see the activations of all the cells in real time.</p>
 
@@ -296,7 +227,7 @@ d3.select("html head").append("meta")
 
   <p><a id="footnote1">1.</a> The model has a parameter which determines how widely it samples from the underlying distribution. It is labeled here as variation but is more commonly referred to as temperature. Temperature is most commonly discussed in <a href="https://en.wikipedia.org/wiki/Boltzmann_distribution">Boltzmann distributions</a>, but can be generalized to all probability distributions. In this more general form, changing the temperature by a factor of <i>T</i> corresponds to raising all probabilities to the power of <i>1/T</i> and normalizing.</p>
 
-  <p><a id="footnote2">2.</a> The model used in this articles is a version of the model described in Section 4.2 of <a href="https://arxiv.org/abs/1308.0850">Generating Sequences With Recurrent Neural Network</a> by Alex Graves <dt-cite article="graves2013generating"></dt-cite>. It is a small LSTM, with 500 hidden units, trained to perform the unconditional handwriting generation task.  For a detailed description of the model and training procedure, please refer to <a href="http://blog.otoro.net/2015/12/12/handwriting-generation-demo-in-tensorflow/">this blog post</a> <dt-cite article="ha2016handwriting"></dt-cite> in addition to the Graves paper.  After training the LSTM, we quantized the weights using 8-bit integers, and exported the weights into a small <a href="https://jb64.org/specification/">JSON-Base64</a> formatted file.</p>
+  <p><a id="footnote2">2.</a> The model used in this articles is a version of the model described in Section 4.2 of <a href="https://arxiv.org/abs/1308.0850">Generating Sequences With Recurrent Neural Network</a> by Alex Graves <dt-cite key="graves2013generating"></dt-cite>. It is a small LSTM, with 500 hidden units, trained to perform the unconditional handwriting generation task.  For a detailed description of the model and training procedure, please refer to <a href="http://blog.otoro.net/2015/12/12/handwriting-generation-demo-in-tensorflow/">this blog post</a> <dt-cite key="ha2016handwriting"></dt-cite> in addition to the Graves paper.  After training the LSTM, we quantized the weights using 8-bit integers, and exported the weights into a small <a href="https://jb64.org/specification/">JSON-Base64</a> formatted file.</p>
 
   <p><a id="footnote3">3.</a> We use two different tricks to make the t-SNE organization of neurons work better. First, if a cell state is mostly negative, we canonicalize it by flipping its sign. (From the LSTM's perspective, this is completely equivelant, provided we flip the sign of some weights. The sign of a cell state is arbitrary.) Secondly, we tried using different metrics on points in our dataset for t-SNE, encouraging it to put points we think of as similar close together. We got good results basing our metric on blurred data (so that cells offset forward or backwards by one are still close together) and a blurred <a href="https://en.wikipedia.org/wiki/Sobolev_space">Sobolev metric</a> to encourage sharp changes to line up. We achieved slightly better results, presented in the article, yet by creating a metric based on percentiles of cell activation in a neighborhood. See `bin/sort` in the repository for details.</p>
 
@@ -309,14 +240,6 @@ d3.select("html head").append("meta")
   <h3>Author Contributions</h3>
 
   <p>Shan Carter wrote the article and created the interactive experiments in the first section. David Ha created the handwriting model and ported it to Javascript. Ian Johnson created the final diagrams exploring activations. Chris Olah provided guidance and core ideas for the diagrams and edited the article.</p>
-
-  <h3>References</h3>
-  <ul class="references">
-    <li><a href="https://arxiv.org/pdf/1308.0850v5.pdf">Graves, A., 2013. <b>Generating sequences with recurrent neural networks.</b> arXiv preprint arXiv:1308.0850.</a></li>
-    <li><a href="">Ha, D., 2016. <b>Handwriting Generation Demo in TensorFlow</b>.</a></li>
-    <li><a href="https://lvdmaaten.github.io/publications/papers/JMLR_2008.pdf">Maaten, L.V.D. and Hinton, G., 2008. <b>Visualizing data using t-SNE.</b> Journal of Machine Learning Research, 9(Nov), pp.2579-2605.</a></li>
-    <li><a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">Olah, C., 2015. <b>Understanding LSTM Networks</b>.</a></li>
-  </ul>
 
 </dt-appendix>
 
