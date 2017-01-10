@@ -1,10 +1,8 @@
 <!doctype html>
 <meta charset="utf-8">
-<script src="http://distill.pub/components.js"></script>
 <dt-header></dt-header>
 <script src="assets/webcomponents-lite.min.js"></script>
 <link rel="import" href="assets/polymer-mini.html">
-
 <script src="assets/d3.min.js"></script>
 <script src="assets/d3-scale-chromatic.min.js"></script>
 
@@ -119,15 +117,15 @@ d3.select("html head").append("meta")
 // <meta name="viewport" content="width=device-width, initial-scale=1">
 </script>
 
-<dt-post>
-  <div class="intro w-page">
+<dt-article>
+  <div class="intro l-page">
     <h1>Four Experiments in Handwriting with a Neural Network</h1>
     <h2>Let’s start with generating new strokes based on your handwriting input</h2>
   </div>
 
   <div style="position: relative;">
     <div style="position: absolute; width: 100%;">
-      <div class="controls w-page" id="figure-predict-controls" style="text-align: center;z-index: 10;position: relative;margin-top: 18px;">
+      <div class="controls l-page" id="figure-predict-controls" style="text-align: center;z-index: 10;position: relative;margin-top: 18px;">
         <button onclick="document.querySelector('figure-predict').playToggle()">Play/Pause</button>
         <button onclick="document.querySelector('figure-predict').clear()">Clear</button>
 
@@ -162,7 +160,7 @@ d3.select("html head").append("meta")
     <input type="range" value="0.6" min="0.1" max="1.5" step="0.05" oninput="document.querySelector('figure-animated').temperature(this.value); document.querySelector('#figure-animated-controls .value').textContent = this.value;" />
     <span class="value">0.6</span>
   </div>
-  <figure-animated class="w-page" temperature="0.6"></figure-animated>
+  <figure-animated class="l-page" temperature="0.6"></figure-animated>
 
   <!-- <p>To get the model to generate that handwriting, we simply fed in a starting point and then asked it to predict the next position of the pen. We then feed this sample back into the model and repeated the process over and over. After a few hundred iterations we have a sample of what the model thinks is a credible handwriting example.</p> -->
 
@@ -170,7 +168,7 @@ d3.select("html head").append("meta")
     <button class="play" onclick="document.querySelector('figure-gaussian').play()">Play/Pause</button>
     <button class="restart" onclick="document.querySelector('figure-gaussian').restart()">Restart</button>
   </div>
-  <figure-gaussian class="w-page"></figure-gaussian> -->
+  <figure-gaussian class="l-page"></figure-gaussian> -->
 
   <p>Most of the marks are gibberish, but many of them are surprisingly convincing. Some real (or real-ish) words even start to appear. One surprising thing you’ll notice is that the general style of handwriting is more or less consistent within a sample. This is because the type of architecture used for this model (LSTM) has a mechanism for remembering previous strokes. It is therefore able to remember things like how loopy or jerky the handwriting is, or which letter preceeded the current one. (For more on LSTMs and how they can remember, Chris Olah has a <a href="http://colah.github.io/posts/2015-08-Understanding-LSTMs/">good primer</a> <dt-cite article="olah2015understanding"></dt-cite>.)</p>
 
@@ -246,13 +244,13 @@ d3.select("html head").append("meta")
 
   <p>We begin by showing the activation of the cells over time. Each column in the heatmap below represents one line segment of the handwriting. Each row represents one cell of the model and is colored by its activations on that part of the stroke. By inspecting the diagram you may be able to see some patterns in the way certain cells activate for certain types of strokes. You can change which cell is used to color the strokes by clicking on the diagram.</p>
 
-  <figure-cells class="w-page" mode="unsorted" defaults="93,0"></figure-cells>
+  <figure-cells class="l-page" mode="unsorted" defaults="93,0"></figure-cells>
 
   <p>You may have been able to pick out one or two cells with interesting patterns, but we have reason to believe that cells work in tandem, such that an individual cell’s activity may not be as interesting as a group of cells.</p>
 
   <p>Is there a way to order the cells to make this structure clearer? We've found that applying one-dimensional <a href="https://lvdmaaten.github.io/tsne/">t-SNE</a> <dt-cite article="maaten2008visualizing"></dt-cite> to the activations of the cells over time can organize them, bringing cells with similar behavior close together. This makes the diagram easier to read. We use a few small tricks to achieve the best results.<sup><a href="#footnote3">3</a></sup></p>
 
-  <figure-cells class="w-page" mode="sorted" defaults="55,0"></figure-cells>
+  <figure-cells class="l-page" mode="sorted" defaults="55,0"></figure-cells>
 
   <p>In this version we can find a few clear behaviors. For example, cells <a onclick="cellClick(11)">11</a>-<a onclick="cellClick(70)">70</a> at the top seem sensitive to slightly different directions and curvatures of the pen path -- see in particular cells <a onclick="cellClick(25)">25</a> and <a onclick="cellClick(55)">55</a>. On the other hand, at the bottom, cells below <a onclick="cellClick(427)">427</a> seem focused on pen lifts; for example, cell <a onclick="cellClick(494)">494</a> seems to predict whether the pen is about to be lifted. In the middle, we see a variety of cells, including some tracking absolute position. Cell <a onclick="cellClick(136)">136</a> and its neighbors seem concerned with horizontal position, while cells around <a onclick="cellClick(236)">236</a> seem concerned with vertical position. Cell <a onclick="cellClick(242)">242</a> appears to track position within a word. </p>
 
@@ -263,10 +261,10 @@ d3.select("html head").append("meta")
 
   <p>Another way to explore the activations is to give it a sample and interactively see the activations. Below you can write and see the activations of all the cells in real time.</p>
 
-  <div class="controls w-page" id="figure-cells-draw-controls" style="margin-top: 36px;">
+  <div class="controls l-page" id="figure-cells-draw-controls" style="margin-top: 36px;">
     <button onclick="document.querySelector('figure-cells-draw').clear()">Clear</button>
   </div>
-  <figure-cells-draw class="w-page" mode="sorted" defaults="55,0"></figure-cells-draw>
+  <figure-cells-draw class="l-page" mode="sorted" defaults="55,0"></figure-cells-draw>
 
   <hr>
 
@@ -276,7 +274,7 @@ d3.select("html head").append("meta")
 
   <p>As we are able to move them more and more into the same programming context that user interface work is done, we believe we will see richer modes of human-ai interactions flourish. This could have a marked impact on debugging and building models, for sure, but also in how the models are used. Machine learning research typically seeks to mimic and substitute humans, and increasingly it’s able to. What seems less explored is using machine learning to augment humans. This sort of complicated human-machine interaction is best explored when the full capabilities of the model are available in the user interface context.</p>
 
-</dt-post>
+</dt-article>
 
 <dt-appendix>
 
@@ -308,5 +306,4 @@ d3.select("html head").append("meta")
 
 </dt-appendix>
 
-</dt-post>
 <dt-footer></dt-footer>
