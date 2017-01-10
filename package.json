@@ -1,40 +1,6 @@
 {
   "main": "index.html",
   "name": "handwriting",
-  "distill": {
-    "title": "Experiments in Handwriting with a Neural Network",
-    "description": "Several interactive visualizations of a generative model of handwriting. Some are fun, some are serious.",
-    "authors": [
-      {
-        "firstName": "Shan",
-        "lastName": "Carter",
-        "personalURL": "http://shancarter.com",
-        "affiliation": "Google Brain",
-        "affiliationURL": "http://g.co/brain"
-      },
-      {
-        "firstName": "David",
-        "lastName": "Ha",
-        "personalURL": "https://github.com/hardmaru",
-        "affiliation": "Google Brain",
-        "affiliationURL": "http://g.co/brain"
-      },
-      {
-        "firstName": "Ian",
-        "lastName": "Johnson",
-        "personalURL": "https://github.com/enjalot",
-        "affiliation": "Google Cloud",
-        "affiliationURL": ""
-      },
-      {
-        "firstName": "Chris",
-        "lastName": "Olah",
-        "personalURL": "http://colah.github.io/",
-        "affiliation": "Google Brain",
-        "affiliationURL": "http://g.co/brain"
-      }
-    ]
-  },
   "dependencies": {
     "@webcomponents/custom-elements": "github:webcomponents/custom-elements",
     "@webcomponents/shadydom": "github:webcomponents/shadydom",
