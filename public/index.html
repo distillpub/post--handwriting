@@ -96,7 +96,7 @@
         <input type="range" value="20" min="5" max="200" step="5" oninput="document.querySelector('figure-predict').setPredictionLength(this.value); document.querySelector('#figure-predict-controls .prediction-length').textContent = this.value;" style="width: 70px;"/>
         <span class="prediction-length" style="display: inline-block; width: 18px; text-align: left; margin-left: 6px;">20</span>
 
-        <span style="margin-left: 18px;">Variation<sup><a href="#footnote1">1</a></sup></span>
+        <span style="margin-left: 18px;">Variation<dt-fn>The model has a parameter which determines how widely it samples from the underlying distribution. It is labeled here as variation but is more commonly referred to as temperature. Temperature is most commonly discussed in <a href="https://en.wikipedia.org/wiki/Boltzmann_distribution">Boltzmann distributions</a>, but can be generalized to all probability distributions. In this more general form, changing the temperature by a factor of <i>T</i> corresponds to raising all probabilities to the power of <i>1/T</i> and normalizing.</dt-fn></span>
         <input type="range" value="0.1" min="0.1" max="0.7" step="0.05" oninput="document.querySelector('figure-predict').setTemperature(this.value); document.querySelector('#figure-predict-controls .temperature').textContent = this.value;" style="width: 70px;"/>
         <span class="temperature" style="display: inline-block; width: 40px;">0.1</span>
 
@@ -109,7 +109,7 @@
 
   <p> Neural networks are an extremely successful approach to machine learning, but it’s tricky to understand why they behave the way they do. This has sparked a lot of interest and effort around trying to understand and visualize them, which we think is so far just scratching the surface of what is possible.</p>
 
-  <p>In this article we will try to push forward in this direction by taking a generative model of handwriting<sup><a href="#footnote2">2</a></sup> and visualizing it in a number of ways.  The model is quite simple (so as to run well in the browser) so the generated output mostly produces gibberish letters and words (albeit, gibberish that look like real handwriting), but it is still useful for our purposes of exploring visualization techniques.</p>
+  <p>In this article we will try to push forward in this direction by taking a generative model of handwriting<dt-fn>The model used in this articles is a version of the model described in Section 4.2 of <a href="https://arxiv.org/abs/1308.0850">Generating Sequences With Recurrent Neural Network</a> by Alex Graves <dt-cite key="graves2013generating"></dt-cite>. It is a small LSTM, with 500 hidden units, trained to perform the unconditional handwriting generation task.  For a detailed description of the model and training procedure, please refer to <a href="http://blog.otoro.net/2015/12/12/handwriting-generation-demo-in-tensorflow/">this blog post</a> <dt-cite key="ha2016handwriting"></dt-cite> in addition to the Graves paper.  After training the LSTM, we quantized the weights using 8-bit integers, and exported the weights into a small <a href="https://jb64.org/specification/">JSON-Base64</a> formatted file.</dt-fn> and visualizing it in a number of ways.  The model is quite simple (so as to run well in the browser) so the generated output mostly produces gibberish letters and words (albeit, gibberish that look like real handwriting), but it is still useful for our purposes of exploring visualization techniques.</p>
 
   <p>In the end we don’t have some ultimate answer or visualization, but we do have some interesting ideas to share. Ultimately we hope they make it easier to divine some meaning from the internals of these model.</p>
 
@@ -198,7 +198,7 @@
 
   <p>You may have been able to pick out one or two cells with interesting patterns, but we have reason to believe that cells work in tandem, such that an individual cell’s activity may not be as interesting as a group of cells.</p>
 
-  <p>Is there a way to order the cells to make this structure clearer? We've found that applying one-dimensional <a href="https://lvdmaaten.github.io/tsne/">t-SNE</a> <dt-cite key="maaten2008visualizing"></dt-cite> to the activations of the cells over time can organize them, bringing cells with similar behavior close together. This makes the diagram easier to read. We use a few small tricks to achieve the best results.<sup><a href="#footnote3">3</a></sup></p>
+  <p>Is there a way to order the cells to make this structure clearer? We've found that applying one-dimensional <a href="https://lvdmaaten.github.io/tsne/">t-SNE</a> <dt-cite key="maaten2008visualizing"></dt-cite> to the activations of the cells over time can organize them, bringing cells with similar behavior close together. This makes the diagram easier to read. We use a few small tricks to achieve the best results.<dt-fn> We use two different tricks to make the t-SNE organization of neurons work better. First, if a cell state is mostly negative, we canonicalize it by flipping its sign. (From the LSTM's perspective, this is completely equivelant, provided we flip the sign of some weights. The sign of a cell state is arbitrary.) Secondly, we tried using different metrics on points in our dataset for t-SNE, encouraging it to put points we think of as similar close together. We got good results basing our metric on blurred data (so that cells offset forward or backwards by one are still close together) and a blurred <a href="https://en.wikipedia.org/wiki/Sobolev_space">Sobolev metric</a> to encourage sharp changes to line up. We achieved slightly better results, presented in the article, yet by creating a metric based on percentiles of cell activation in a neighborhood. See `bin/sort` in the repository for details.</dt-fn></p>
 
   <figure-cells class="l-page" mode="sorted" defaults="55,0"></figure-cells>
 
@@ -223,14 +223,6 @@
 
 <dt-appendix>
 
-  <h3>Footnotes</h3>
-
-  <p><a id="footnote1">1.</a> The model has a parameter which determines how widely it samples from the underlying distribution. It is labeled here as variation but is more commonly referred to as temperature. Temperature is most commonly discussed in <a href="https://en.wikipedia.org/wiki/Boltzmann_distribution">Boltzmann distributions</a>, but can be generalized to all probability distributions. In this more general form, changing the temperature by a factor of <i>T</i> corresponds to raising all probabilities to the power of <i>1/T</i> and normalizing.</p>
-
-  <p><a id="footnote2">2.</a> The model used in this articles is a version of the model described in Section 4.2 of <a href="https://arxiv.org/abs/1308.0850">Generating Sequences With Recurrent Neural Network</a> by Alex Graves <dt-cite key="graves2013generating"></dt-cite>. It is a small LSTM, with 500 hidden units, trained to perform the unconditional handwriting generation task.  For a detailed description of the model and training procedure, please refer to <a href="http://blog.otoro.net/2015/12/12/handwriting-generation-demo-in-tensorflow/">this blog post</a> <dt-cite key="ha2016handwriting"></dt-cite> in addition to the Graves paper.  After training the LSTM, we quantized the weights using 8-bit integers, and exported the weights into a small <a href="https://jb64.org/specification/">JSON-Base64</a> formatted file.</p>
-
-  <p><a id="footnote3">3.</a> We use two different tricks to make the t-SNE organization of neurons work better. First, if a cell state is mostly negative, we canonicalize it by flipping its sign. (From the LSTM's perspective, this is completely equivelant, provided we flip the sign of some weights. The sign of a cell state is arbitrary.) Secondly, we tried using different metrics on points in our dataset for t-SNE, encouraging it to put points we think of as similar close together. We got good results basing our metric on blurred data (so that cells offset forward or backwards by one are still close together) and a blurred <a href="https://en.wikipedia.org/wiki/Sobolev_space">Sobolev metric</a> to encourage sharp changes to line up. We achieved slightly better results, presented in the article, yet by creating a metric based on percentiles of cell activation in a neighborhood. See `bin/sort` in the repository for details.</p>
-
   <h3>Acknowledgments</h3>
 
   <p>We are grateful for the comments of Fernanda Viegas, Martin Wattenberg, and Daniel Smilkov.
@@ -243,7 +235,6 @@
 
 </dt-appendix>
 
-<dt-footer></dt-footer>
 <script type="text/bibliography">
 @article{graves2013generating,
   title={Generating sequences with recurrent neural networks},
