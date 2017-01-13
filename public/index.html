@@ -72,19 +72,15 @@
     margin: 0 3px 0 2px;
     font-size: 12px;
   }
-  .post h3 {
-    margin-top: 48px;
-    font-size: 20px;
-  }
   .post a {
     cursor: pointer;
   }
 
 </style>
 
-<dt-article class="post">
+<dt-article class="centered post">
   <h1 class="l-middle">Four Experiments in Handwriting with a Neural Network</h1>
-  <h2 class="l-page">Let’s start with generating new strokes based on your handwriting input</h2>
+  <h2 class="l-middle">Let’s start with generating new strokes based on your handwriting input</h2>
 
   <div class="l-screen" style="position: relative;">
     <div style="position: absolute; width: 100%;">
@@ -113,7 +109,7 @@
 
   <p>In the end we don’t have some ultimate answer or visualization, but we do have some interesting ideas to share. Ultimately we hope they make it easier to divine some meaning from the internals of these model.</p>
 
-  <h3>Looking at the Output of the Model</h3>
+  <h2>Looking at the Output of the Model</h2>
 
   <p>Our first experiment is the most obvious: when we want to see how well someone has learned a task we usually ask them to demonstrate it. So, let’s ask our model to write something for us and see how well it does.</p>
 
@@ -188,7 +184,7 @@
 
   <p>It is obvious from these experiments that this model has learned quite a lot about human handwriting. Which sort of raises the question, can we extract that knowledge in any meaningful way, rather than just blindly using it to mimic handwriting?</p>
 
-  <h3>Examining the Internals of the Model</h3>
+  <h2>Examining the Internals of the Model</h2>
 
   <p>Our model has 500 cells which act as a sort of memory which it will use as part of its input when deciding what to generate. If we can see what those cells are doing as the model progresses we may be able to gain some intuitive understanding about what the model is doing.</p>
 
@@ -213,7 +209,7 @@
 
   <hr>
 
-  <h3>Conclusion</h3>
+  <h2>Conclusion</h2>
 
   <p>The black box reputation of machine learning models is well deserved, but we believe part of that reputation has been born from the programming context into which they have been locked. The experience of having an easily inspectable model available in the same programming context as the interactive visualization environment (here, javascript) proved to be very productive for prototyping and exploring new ideas for this post.</p>
 
