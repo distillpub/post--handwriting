@@ -1,52 +1,52 @@
+<style>
+  figure-predict {
+    display: block;
+    position: relative;
+    height: 400px;
+  }
+  figure-predict svg {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  figure-predict canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    mix-blend-mode: multiply;
+  }
+  figure-predict .user path {
+    fill: none;
+    stroke: rgb(49, 145, 137);
+    stroke-width: 1.5px;
+  }
+  figure-predict .user circle {
+    fill: rgb(49, 145, 137);
+  }
+  figure-predict .user line {
+    stroke: #ddd;
+    stroke-dasharray: 3,3;
+  }
+  figure-predict .user .prompt circle {
+    fill: none;
+    stroke: #ddd;
+  }
+  figure-predict .user .prompt text {
+    font-size: 13px;
+    fill: #aaa;
+  }
+</style>
 
 <dom-module id="figure-predict">
   <template>
-    <style>
-      :host {
-        display: block;
-        position: relative;
-        height: 400px;
-      }
-      svg {
-        pointer-events: none;
-        position: absolute;
-        top: 0;
-        left: 0;
-        display: block;
-        width: 100%;
-        height: 100%;
-      }
-      canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-        display: block;
-        width: 100%;
-        height: 100%;
-        mix-blend-mode: multiply;
-      }
-      .user path {
-        fill: none;
-        stroke: rgb(49, 145, 137);
-        stroke-width: 1.5px;
-      }
-      .user circle {
-        fill: rgb(49, 145, 137);
-      }
-      .user line {
-        stroke: #ddd;
-        stroke-dasharray: 3,3;
-      }
-      .user .prompt circle {
-        fill: none;
-        stroke: #ddd;
-      }
-      .user .prompt text {
-        font-size: 13px;
-        fill: #aaa;
-      }
-    </style>
-    <svg id="svg">
+    <svg>
       <g class="user">
         <g class="prompt">
           <text dx="-5" dy="-12">Start writing here and the network will try to generate new strokes in your style</text>
@@ -59,7 +59,7 @@
 
       </g>
     </svg>
-    <canvas id="canvas"></canvas>
+    <canvas></canvas>
   </template>
 </dom-module>
 
@@ -67,12 +67,12 @@
 Polymer({
   is: "figure-predict",
   initialize: function() {
-    console.log("init")
     var that = this;
     this.color = d3.scaleSequential(d3.interpolateBrBG).domain([-3, 3]);
 
-    this.canvas = d3.select(this.$.canvas);
-    this.svg = d3.select(this.$.svg);
+    this.root = d3.select(this);
+    this.canvas = this.root.select("canvas");
+    this.svg = this.root.select("svg");
 
     this.xScale = d3.scaleLinear();
     this.yScale = d3.scaleLinear();
@@ -109,7 +109,7 @@ Polymer({
     this.playing = false;
   },
   resize: function() {
-    var bbox = this.$.canvas.getBoundingClientRect();
+    var bbox = this.getBoundingClientRect();
 
     this.width = bbox.width;
     this.height = bbox.height;
@@ -143,7 +143,6 @@ Polymer({
     // this.play();
   },
   ready: function() {
-    console.log("ready");
     var that = this;
     this.initialize();
 
