@@ -205,13 +205,13 @@
 
   <p>We begin by showing the activation of the cells over time. Each column in the heatmap below represents one line segment of the handwriting. Each row represents one cell of the model and is colored by its activations on that part of the stroke. By inspecting the diagram you may be able to see some patterns in the way certain cells activate for certain types of strokes. You can change which cell is used to color the strokes by clicking on the diagram.</p>
 
-  <figure-cells class="l-page" mode="unsorted" defaults="93,0"></figure-cells>
+  <figure-cells class="l-screen base-grid" mode="unsorted" defaults="93,0"></figure-cells>
 
   <p>You may have been able to pick out one or two cells with interesting patterns, but we have reason to believe that cells work in tandem, such that an individual cell’s activity may not be as interesting as a group of cells.</p>
 
   <p>Is there a way to order the cells to make this structure clearer? We've found that applying one-dimensional <a href="https://lvdmaaten.github.io/tsne/">t-SNE</a> <d-cite key="maaten2008visualizing"></d-cite> to the activations of the cells over time can organize them, bringing cells with similar behavior close together. This makes the diagram easier to read. We use a few small tricks to achieve the best results.<d-footnote> We use two different tricks to make the t-SNE organization of neurons work better. First, if a cell state is mostly negative, we canonicalize it by flipping its sign. (From the LSTM's perspective, this is completely equivalent, provided we flip the sign of some weights. The sign of a cell state is arbitrary.) Secondly, we tried using different metrics on points in our dataset for t-SNE, encouraging it to put points we think of as similar close together. We got good results basing our metric on blurred data (so that cells offset forward or backwards by one are still close together) and a blurred <a href="https://en.wikipedia.org/wiki/Sobolev_space">Sobolev metric</a> to encourage sharp changes to line up. We achieved slightly better results, presented in the article, yet by creating a metric based on percentiles of cell activation in a neighborhood. See `bin/sort` in the repository for details.</d-footnote></p>
 
-  <figure-cells class="l-page" mode="sorted" defaults="55,0"></figure-cells>
+  <figure-cells class="l-screen base-grid" mode="sorted" defaults="55,0"></figure-cells>
 
   <p>In this version we can find a few clear behaviors. For example, cells <a onclick="cellClick(11)">11</a>-<a onclick="cellClick(70)">70</a> at the top seem sensitive to slightly different directions and curvatures of the pen path -- see in particular cells <a onclick="cellClick(25)">25</a> and <a onclick="cellClick(55)">55</a>. On the other hand, at the bottom, cells below <a onclick="cellClick(427)">427</a> seem focused on pen lifts; for example, cell <a onclick="cellClick(494)">494</a> seems to predict whether the pen is about to be lifted. In the middle, we see a variety of cells, including some tracking absolute position. Cell <a onclick="cellClick(136)">136</a> and its neighbors seem concerned with horizontal position, while cells around <a onclick="cellClick(236)">236</a> seem concerned with vertical position. Cell <a onclick="cellClick(242)">242</a> appears to track position within a word. </p>
 
@@ -220,7 +220,7 @@
   <div class="controls l-page" id="figure-cells-draw-controls" style="margin-top: 36px;">
     <button onclick="document.querySelector('figure-cells-draw').clear()">Clear</button>
   </div>
-  <figure-cells-draw class="l-page" mode="sorted" defaults="55,0"></figure-cells-draw>
+  <figure-cells-draw class="l-screen base-grid" mode="sorted" defaults="55,0"></figure-cells-draw>
 
   <hr>
 

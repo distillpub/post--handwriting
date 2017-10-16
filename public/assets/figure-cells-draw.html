@@ -46,11 +46,13 @@ figure-cells-draw cells-grid {
 
 <dom-module id="figure-cells-draw">
   <template>
-    <cells-draw></cells-draw>
-    <div class="cells">
-      <cells-canvas></cells-canvas>
-      <cells-overlay></cells-overlay>
-      <cells-grid></cells-grid>
+    <div class="l-page" style="position: relative;">
+      <cells-draw></cells-draw>
+      <div class="cells">
+        <cells-canvas></cells-canvas>
+        <cells-overlay></cells-overlay>
+        <cells-grid></cells-grid>
+      </div>
     </div>
     <!--
     <cells-detail></cells-detail>
