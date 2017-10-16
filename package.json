@@ -1,6 +1,9 @@
 {
   "main": "index.html",
   "name": "handwriting",
+  "scripts": {
+    "serve": "python3 -m http.server --bind 127.0.0.1 8001"
+  },
   "dependencies": {
     "@webcomponents/custom-elements": "github:webcomponents/custom-elements",
     "@webcomponents/shadydom": "github:webcomponents/shadydom",

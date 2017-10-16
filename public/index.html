@@ -54,25 +54,22 @@
 <link rel="import" href="assets/figure-cells-draw.html">
 
 <style>
-.post h2 {
-  border-bottom: none!important;
-}
-  .post .controls {
+  .controls {
     border-top: 1px solid rgba(0, 0, 0, 0.1);
-    margin-top: 48px;
+    margin-top: 24px;
     padding-top: 18px;
   }
-  .post .controls span {
+  .controls span {
     font-size: 14px;
   }
-  .post .controls button {
+  .controls button {
     font-size: 13px;
     padding: 4px 8px;
     border-radius: 3px;
     background-color: rgba(0, 0, 0, 0.03);
     border: 1px solid rgba(0, 0, 0, 0.2);
   }
-  .post .controls select {
+  .controls select {
     margin-right: 8px;
     font-size: 13px;
     font-family: "Open sans";
@@ -80,48 +77,46 @@
     background-color: rgba(0, 0, 0, 0.03);
     border: 1px solid rgba(0, 0, 0, 0.2);
   }
-  .post .controls input[type="range"] {
+  .controls input[type="range"] {
     position: relative;
     top: 3px;
   }
-  .post sup {
+  sup {
     vertical-align: baseline;
     position: relative;
     top: -8px;
     margin: 0 3px 0 2px;
     font-size: 12px;
   }
-  .post a {
+  a {
     cursor: pointer;
   }
 
 </style>
 
+<d-title>
+  <h1><span>Four Experiments</span> <span>in Handwriting</span> with a Neural Network</h1>
+  <!-- <p>Let’s start with generating new strokes based on your handwriting input</p> -->
+
+  <div class="controls l-text" id="figure-predict-controls" style="z-index: 10;position: relative;margin-top: 18px;">
+    <button onclick="document.querySelector('figure-predict').playToggle()">Play/Pause</button>
+    <button onclick="document.querySelector('figure-predict').clear()">Clear</button>
+
+    <span style="margin-left: 18px;">Length of prediction</span>
+    <input type="range" value="20" min="5" max="200" step="5" oninput="document.querySelector('figure-predict').setPredictionLength(this.value); document.querySelector('#figure-predict-controls .prediction-length').textContent = this.value;" style="width: 70px;"/>
+    <span class="prediction-length" style="display: inline-block; width: 18px; text-align: left; margin-left: 6px;">20</span>
+
+    <span style="margin-left: 18px;">Variation<d-footnote>The model has a parameter which determines how widely it samples from the underlying distribution. It is labeled here as variation but is more commonly referred to as temperature. Temperature is most commonly discussed in <a href="https://en.wikipedia.org/wiki/Boltzmann_distribution">Boltzmann distributions</a>, but can be generalized to all probability distributions. In this more general form, changing the temperature by a factor of <i>T</i> corresponds to raising all probabilities to the power of <i>1/T</i> and normalizing.</d-footnote></span>
+    <input type="range" value="0.1" min="0.1" max="0.7" step="0.05" oninput="document.querySelector('figure-predict').setTemperature(this.value); document.querySelector('#figure-predict-controls .temperature').textContent = this.value;" style="width: 70px;"/>
+    <span class="temperature" style="display: inline-block; width: 40px;">0.1</span>
+
+  </div>
+  <div class="l-screen" style="position: relative;">
+    <figure-predict class="l-screen" temperature="0.1" predictionlength="20"></figure-predict>
+  </div>
+</d-title>
+<d-byline></d-byline>
 <d-article>
-  <d-title>
-    <h1>Four Experiments in Handwriting with a Neural Network</h1>
-    <h2>Let’s start with generating new strokes based on your handwriting input</h2>
-
-    <div class="l-screen" style="position: relative;">
-      <div style="position: absolute; width: 100%;">
-        <div class="controls l-page" id="figure-predict-controls" style="z-index: 10;position: relative;margin-top: 18px;">
-          <button onclick="document.querySelector('figure-predict').playToggle()">Play/Pause</button>
-          <button onclick="document.querySelector('figure-predict').clear()">Clear</button>
-
-          <span style="margin-left: 18px;">Length of prediction</span>
-          <input type="range" value="20" min="5" max="200" step="5" oninput="document.querySelector('figure-predict').setPredictionLength(this.value); document.querySelector('#figure-predict-controls .prediction-length').textContent = this.value;" style="width: 70px;"/>
-          <span class="prediction-length" style="display: inline-block; width: 18px; text-align: left; margin-left: 6px;">20</span>
-
-          <span style="margin-left: 18px;">Variation<d-footnote>The model has a parameter which determines how widely it samples from the underlying distribution. It is labeled here as variation but is more commonly referred to as temperature. Temperature is most commonly discussed in <a href="https://en.wikipedia.org/wiki/Boltzmann_distribution">Boltzmann distributions</a>, but can be generalized to all probability distributions. In this more general form, changing the temperature by a factor of <i>T</i> corresponds to raising all probabilities to the power of <i>1/T</i> and normalizing.</d-footnote></span>
-          <input type="range" value="0.1" min="0.1" max="0.7" step="0.05" oninput="document.querySelector('figure-predict').setTemperature(this.value); document.querySelector('#figure-predict-controls .temperature').textContent = this.value;" style="width: 70px;"/>
-          <span class="temperature" style="display: inline-block; width: 40px;">0.1</span>
-
-        </div>
-      </div>
-      <figure-predict class="l-screen" temperature="0.1" predictionlength="20"></figure-predict>
-    </div>
-  </d-title>
-  <d-byline></d-byline>
 
   <p> Neural networks are an extremely successful approach to machine learning, but it’s tricky to understand why they behave the way they do. This has sparked a lot of interest and effort around trying to understand and visualize them, which we think is so far just scratching the surface of what is possible.</p>
 
@@ -145,14 +140,14 @@
 
   <p>Even with this memory, the technique for generating samples from neural networks is probabilistic, meaning each of these samples is one of a much, much larger possibility space. Viewing them one at a time feels unsatisfying — how can we infer much from one or two samples when there are nearly infinite possibilities? If something looks wrong, how do we know if it was because there is something fundamentally wrong with our model or if it was just dumb luck?</p>
 
+  <p>At each iteration our model could have produced many paths. Instead of picking one and throwing the rest away, let’s draw, say, 50 of them. Green strokes below are places where the model would have veered rightward from the chosen stroke, orange is where it would have veered leftward.</p>
+
   <figure class="l-gutter">
     <img class="key" src="assets/color-key.svg" style="width: 145px;">
   </figure>
 
-  <p>At each iteration our model could have produced many paths. Instead of picking one and throwing the rest away, let’s draw, say, 50 of them. Green strokes below are places where the model would have veered rightward from the chosen stroke, orange is where it would have veered leftward.</p>
-
-  <figure-hairs class="l-screen">
-    <div class="controls l-body">
+  <figure-hairs class="l-screen base-grid">
+    <div class="controls l-text">
       <select class="sample">
         <option value="001">Generated sample 1</option>
         <option value="002">Generated sample 2</option>
@@ -174,14 +169,14 @@
 
   <p>With this technique we are casting a light into a wider possibility space. You can see some areas where there was general consensus as to what to do next. Other areas had more of a “anything can happen next” feeling. Others seem to show a possible fork in the road. We can be drawing an “a” or “g”. A few steps later it’s clear the model has converged on a cursive “g”.</p>
 
-  <figure class="l-gutter">
-    <img class="key" src="assets/color-key.svg" style="width: 145px;">
-  </figure>
-
   <p>In addition to visualizing samples generated by the model, this technique can also be applied to human-generated samples. Below we can see what the model would have done at each point if it had taken over for the person.</p>
 
-  <figure-hairs class="l-screen">
-    <div class="controls l-body">
+    <figure class="l-gutter">
+      <img class="key" src="assets/color-key.svg" style="width: 145px;">
+    </figure>
+
+  <figure-hairs class="base-grid">
+    <div class="controls l-text">
       <select class="sample">
         <option value="0">Validation sample 0</option>
         <option value="1">Validation sample 1</option>
