@@ -57,6 +57,7 @@ Polymer({
     var sampleSelect = this.querySelector(".sample");
     sampleSelect.addEventListener("change", () => updateSample());
     var stepSelect = this.querySelector(".step");
+    console.log(this, stepSelect)
     stepSelect.addEventListener("input", () => updateStep());
     var temperatureSelect = this.querySelector(".temperature");
     temperatureSelect.addEventListener("input", () => updateStep());
