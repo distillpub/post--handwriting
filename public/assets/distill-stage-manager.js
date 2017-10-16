@@ -1,4 +1,3 @@
-<script>
 // Example:
 // distill.stageManager.add(HTMLElement, {enterStage: callback, exitStage: callback});
 //
@@ -104,4 +103,3 @@ distill.stageManager = {
 
 distill.stageManager.initialize();
 
-</script>
