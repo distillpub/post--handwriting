@@ -2,7 +2,7 @@
   "main": "index.html",
   "name": "handwriting",
   "scripts": {
-    "install": "cp bower_components/polymer/polymer.html public/assets/ && cp -r bower_components/polymer/lib public/assets/",
+    "install": "cp bower_components/polymer/polymer.html public/assets/ && cp bower_components/polymer/polymer-element.html public/assets/ && cp bower_components/shadycss/apply-shim.html public/shadycss/ && cp bower_components/shadycss/apply-shim.min.js public/shadycss/ && cp bower_components/shadycss/custom-style-interface.html public/shadycss/ && cp bower_components/shadycss/custom-style-interface.min.js public/shadycss/ && cp -r bower_components/polymer/lib public/assets/",
     "serve": "python3 -m http.server --bind 127.0.0.1 8001"
   },
   "dependencies": {
